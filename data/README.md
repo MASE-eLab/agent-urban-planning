@@ -15,10 +15,14 @@ you need a `git clone` for paper reproducibility.
 | `singapore/` | Singapore real-data tiny scenario YAMLs | < 1 MB | yes | yes |
 | `berlin/ortsteile/` | 96-zone Ortsteile NPZ files (paper main resolution) | 328 KB | yes | no |
 | `berlin/bezirke/` | 12-Bezirk NPZ files (smoke-test resolution) | 20 KB | yes | no |
+| `berlin/blocks/fund_2006.npz` | Block-level fundamentals for L-override | 840 KB | yes | no |
 | `berlin/ortsteile_joint/` | Joint residence-workplace 2011 micro-data | 8.9 MB | yes | no |
 | `berlin/crosswalks/` | Block ↔ Bezirk/Ortsteile CSVs + aggregation rules | 1.4 MB | yes | yes |
 | `berlin/params/` | Calibration parameters (α, β, ε etc.) | < 4 KB | yes | yes |
 | `berlin/public_demographics/` | Public demographic distributions | 80 KB | yes | yes |
+| `berlin/scenarios/` | Berlin scenario YAML (96-zone Ortsteile, 2006) | < 4 KB | yes | yes |
+| `berlin/agents/` | Berlin agent demographics (10k richer profiles) | 4.1 MB | yes | yes |
+| `berlin/shocks/` | East-West Express τ shock spec | < 1 KB | yes | yes |
 | `shapefiles/` | Berlin block + green + water shapefiles (5 files × 3 layers) | 10 MB | yes | no |
 
 Total bundled: ~21 MB.
@@ -43,14 +47,40 @@ NPZs to `data/berlin/blocks/`.
 ### V5 LLM cache (`berlin/llm_cache_v5/`)
 
 The bundled cache from the paper's V5 score-all-96 baseline + shock
-runs is **~320 MB** — too large for git. Two options:
+runs is **~320 MB** — too large for git. Three options:
 
 1. **Live LLM run**: configure a provider (`codex-cli` recommended)
-   and rerun. Wall-clock ~10 hours, requires LLM credits.
+   and rerun:
+
+   ```bash
+   python examples/03_berlin_replication/run_v5_score_all.py \
+       --llm-provider codex-cli
+   ```
+
+   Wall-clock ~10 hours, requires LLM credits (~$30-50 for codex-cli).
+   The first run populates `data/berlin/llm_cache_v5/`; subsequent
+   runs at the same seed reuse the cache and finish in minutes.
 
 2. **External release artifact (TBD)**: we plan to attach the cache
    bundle as a GitHub release asset for v0.1.0; check the
    [Releases page](https://github.com/MASE-eLab/agent-urban-planning/releases).
+   Once available, download to `data/berlin/llm_cache_v5/`:
+
+   ```bash
+   mkdir -p data/berlin/llm_cache_v5
+   curl -L https://github.com/MASE-eLab/agent-urban-planning/releases/download/v0.1.0/llm_cache_v5.tar.gz \
+     | tar -xz -C data/berlin/llm_cache_v5/
+   python examples/03_berlin_replication/run_v5_score_all.py --no-llm
+   ```
+
+3. **Smoke test only**: run with the bundled stub LLM client
+   (returns uniform-score responses; not paper-faithful but exercises
+   the full pipeline):
+
+   ```bash
+   python examples/03_berlin_replication/run_v5_score_all.py \
+       --llm-provider stub-score-all --num-agents 1000 --iters 3
+   ```
 
 ## Sources + attribution
 
