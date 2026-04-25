@@ -38,7 +38,7 @@ python examples/03_berlin_replication/run_v1_softmax.py
 
 Produces:
 - `output/berlin_v1_softmax/per_zone.csv` (baseline)
-- `output/berlin_v1_shock_east_west/per_zone.csv` (post-shock)
+- `output/berlin_v1_softmax_shock_east_west/per_zone.csv` (post-shock)
 
 ## Run V5 (paper headline, cache-replay mode)
 

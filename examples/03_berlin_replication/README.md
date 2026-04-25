@@ -27,10 +27,11 @@ Reproducing these results requires `git clone` rather than `pip install`.
 | Tier 3b | V2 (Baseline-ABM argmax) | ~3 hr | No |
 | Tier 3c | V3 (Normal-ABM argmax) | ~3 hr | No |
 | Tier 3d | V4 (Hybrid-ABM) | ~3 hr | Yes (modest, ~$5) |
-| Tier 4 | V5 (LLM-ABM, paper headline) | ~10 hr | Yes (significant, ~$30-50) |
+| Tier 4 | V5 (LLM-ABM, paper headline) | ~10 hr live / ~5 min cache-replay | Yes / No |
 
 A `--no-llm` mode on `run_v5_score_all.py` replays the bundled cached
-LLM responses at `data/berlin/llm_cache_v5/` so Tier 4 can be reproduced
+LLM responses at `data/berlin/llm_cache_v5/` (hosted as a GitHub
+release asset; see `data/README.md`) so Tier 4 can be reproduced
 without any LLM credits — just bundled data.
 
 ## Scripts
@@ -38,30 +39,44 @@ without any LLM credits — just bundled data.
 - `run_v1_softmax.py` — V1 baseline + East-West shock
 - `run_v2_argmax_frechet.py` — V2 baseline + shock
 - `run_v3_argmax_normal.py` — V3 baseline + shock
-- `run_v4_hybrid.py` — V4 baseline + shock
+- `run_v4_hybrid.py` — V4 baseline + shock (LLM elicits per-type β/κ)
 - `run_v5_score_all.py` — V5 baseline + shock (paper headline)
 
-All scripts share the same structure:
-1. Load the Berlin scenario YAML (`data/berlin/scenarios/berlin_2006_ortsteile.yaml`).
-2. Load agent config YAML (`data/berlin/agents/berlin_ortsteile_richer_10k.yaml`).
-3. Instantiate `aup.UtilityEngine` / `aup.HybridDecisionEngine` /
-   `aup.LLMDecisionEngine` with the variant's kwargs.
-4. Run baseline market clearing.
-5. Apply East-West Express τ shock.
-6. Run shock market clearing (warm-started from baseline).
-7. Save per_zone.csv outputs to `output/{variant}/`.
+All scripts share the same structure (defined in `_common.py`):
+1. Load the Berlin scenario YAML
+   (`data/berlin/scenarios/berlin_2006_ortsteile.yaml`).
+2. Load agent config YAML
+   (`data/berlin/agents/berlin_ortsteile_richer_10k.yaml`).
+3. Construct an engine factory — `aup.UtilityEngine` /
+   `aup.HybridDecisionEngine` / `aup.LLMDecisionEngine` with the
+   variant's kwargs.
+4. Run baseline market clearing → `output/{variant}/per_zone.csv`.
+5. Apply East-West Express τ shock to the travel-time matrix.
+6. Re-run the market warm-started from baseline →
+   `output/{variant}_shock_east_west/per_zone.csv`.
 
-After all variants complete, run the comparison + plotting:
+Each script accepts `--seed`, `--iters`, and (where applicable)
+`--num-agents`, `--batch-size`, `--llm-provider`.
+
+## Smoke testing
+
+To verify the pipeline runs end-to-end at low cost, drop the agent
+count and iteration cap:
 
 ```bash
-python examples/03_berlin_replication/compare_and_plot.py
+python examples/03_berlin_replication/run_v1_softmax.py --iters 3
+python examples/03_berlin_replication/run_v2_argmax_frechet.py \
+    --iters 3 --num-agents 10000 --batch-size 5000
+python examples/03_berlin_replication/run_v3_argmax_normal.py \
+    --iters 3 --num-agents 10000 --batch-size 5000
+python examples/03_berlin_replication/run_v4_hybrid.py \
+    --iters 3 --llm-provider stub-uniform
+python examples/03_berlin_replication/run_v5_score_all.py \
+    --iters 2 --num-agents 1000 --batch-size 500 --cluster-k 5 \
+    --llm-provider stub-score-all
 ```
 
-This produces:
-- `output/comparison/comparison_moments.csv` — cross-version moments
-- `output/comparison/berlin_q_observed_and_log_change.png` — choropleth
-- `output/comparison/berlin_w_observed_and_log_change.png` — choropleth
-- `output/comparison/llm_abm_satisfaction.csv` — V5 self-rating sidebar
+Each smoke test takes < 1 minute and writes a 96-row `per_zone.csv`.
 
 ## Notes on numerical reproducibility
 
