@@ -1,0 +1,33 @@
+# New East-West Regional Express — synthetic railway policy shock for Berlin.
+#
+# A hypothetical 4-station rapid-transit line running cross-city from the
+# eastern outer suburb (Marzahn) through inner-east (Lichtenberg), the CBD
+# (Mitte / Alexanderplatz), and terminating in the inner-west (Charlottenburg).
+# End-to-end travel time: 3 × 5 = 15 min. This roughly halves the current
+# east-west commute time by public transit (observed ~30-45 min).
+#
+# Used by scripts/run_berlin_v{1|2|3|4a|4b|5}_shock.py to patch the τ matrix
+# via Route-C min-of-paths (see simulator.research.railway_shock).
+#
+# Stations are resolved from `ortsteile_name` → synthetic zone ID via
+# data/berlin/ortsteile/zone_names.csv. At the time of writing, all 4 names
+# map uniquely to one synthetic zone each.
+
+name: east_west_express
+description: >
+  Hypothetical cross-city east-west regional express with 4 stations.
+  Outer east (Marzahn) → Inner east (Lichtenberg) → CBD (Mitte) →
+  Inner west (Charlottenburg). 5 minutes between adjacent stations;
+  end-to-end 15 minutes.
+
+intra_station_min: 5.0
+
+stations:
+  - ortsteile_name: "Marzahn"
+    role: "outer-east-terminus"
+  - ortsteile_name: "Lichtenberg"
+    role: "inner-east-hub"
+  - ortsteile_name: "Mitte"
+    role: "cbd"
+  - ortsteile_name: "Charlottenburg"
+    role: "inner-west-terminus"

@@ -9,28 +9,40 @@ See ``run_v1_softmax.py`` for the shared workflow.
 """
 from __future__ import annotations
 
-import agent_urban_planning as aup
-from agent_urban_planning.data.loaders import load_scenario
+import argparse
 
-from _common import (
-    BERLIN_SCENARIO_YAML,
-    check_berlin_data_present,
-    run_baseline_and_shock,
-)
+import agent_urban_planning as aup
+
+from _common import run_baseline_and_shock
 
 
 def main() -> int:
-    check_berlin_data_present()
-    sc = load_scenario(BERLIN_SCENARIO_YAML)
-    engine = aup.UtilityEngine(
-        sc.ahlfeldt_params,
-        mode="argmax",
-        noise="normal",
-        num_agents=1_000_000,
-        seed=42,
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--iters", type=int, default=50)
+    parser.add_argument("--num-agents", type=int, default=1_000_000)
+    parser.add_argument("--batch-size", type=int, default=10_000)
+    args = parser.parse_args()
+
+    def engine_factory(sc, seed, iters):
+        return aup.UtilityEngine(
+            sc.ahlfeldt_params,
+            mode="argmax",
+            noise="normal",
+            num_agents=args.num_agents,
+            batch_size=args.batch_size,
+            seed=seed,
+            dtype=getattr(sc.ahlfeldt_params, "dtype", "float64"),
+        )
+
+    run_baseline_and_shock(
+        engine_factory,
+        output_subdir="berlin_v3_argmax_normal",
+        iters=args.iters,
+        seed=args.seed,
+        engine_name_for_seed_json="AhlfeldtABMEngine",
+        shock_distribution="normal",
     )
-    print(f"Engine: {engine!r}")
-    run_baseline_and_shock(engine, output_subdir="berlin_v3_argmax_normal")
     return 0
 
 
