@@ -103,8 +103,8 @@ class UtilityEngine:
     See Also:
         :class:`agent_urban_planning.HybridDecisionEngine` — V4 (LLM
         elicits per-agent preference weights, then closed-form choice).
-        :class:`agent_urban_planning.LLMDecisionEngine` — V5.0 / V5
-        (full LLM-as-decision-maker hierarchical engine).
+        :class:`agent_urban_planning.LLMDecisionEngine` — V5 (full
+        LLM-as-decision-maker hierarchical engine).
 
     References:
         Ahlfeldt, G. M., Redding, S. J., Sturm, D. M., Wolf, N. (2015).

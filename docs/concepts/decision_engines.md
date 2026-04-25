@@ -26,9 +26,8 @@ flowchart LR
     subgraph V4B ["HybridDecisionEngine"]
         v4[V4 Hybrid]
     end
-    subgraph V54 ["LLMDecisionEngine"]
-        v50[V5.0 top-5]
-        v54[V5 score-all-96]
+    subgraph V5G ["LLMDecisionEngine"]
+        v5[V5 score-all-96]
     end
 ```
 
@@ -99,4 +98,4 @@ See {doc}`/tutorials/02_custom_decision_engine` for the full pattern.
 
 - {doc}`/api/index` — full API reference
 - {doc}`llm_integration` — LLM provider configuration
-- {doc}`/tutorials/03_full_llm_v5` — V5.0/V5 deep dive
+- {doc}`/tutorials/03_full_llm_v5` — V5 deep dive

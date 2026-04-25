@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
-"""Quickstart: instantiate the 5 V1-V5 decision-engine variants.
+"""Quickstart: instantiate the V1, V2, V3, V5 decision-engine variants.
 
 Demonstrates the public API surface in <60 lines of code with no external
 data dependencies. Runs in <10 seconds.
 
 This script is the Tier 2 reproducibility check — if this works, your
-``agent-urban-planning`` install is healthy and the 5 paper variants are
+``agent-urban-planning`` install is healthy and the paper variants are
 configurable via the kwargs documented at:
 
-    https://agent-urban-planning.readthedocs.io/api/decisions.html
+    https://agent-urban-planning.readthedocs.io/api/index.html
 
-End-to-end Berlin reproduction with bundled data is in
-``examples/03_berlin_replication/``.
+V4 (HybridDecisionEngine) requires a pre-built LLM elicitor — see the
+end-to-end Berlin reproduction at ``examples/03_berlin_replication/``.
 """
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ from agent_urban_planning.data.loaders import AhlfeldtParams
 
 
 def _stub_llm_client():
-    """Minimal stub for the LLM-using variants (V4, V5.0, V5)."""
+    """Minimal stub for the LLM-using V5 variant."""
 
     class _StubLLMClient:
         total_concurrency = 1
@@ -53,28 +53,23 @@ def main() -> int:
     v3 = aup.UtilityEngine(params, mode="argmax", noise="normal",
                            num_agents=10, batch_size=10, seed=42)
 
-    # V5.0 — Top-5 hierarchical LLM (legacy).
-    v5_0 = aup.LLMDecisionEngine(params, llm_client=_stub_llm_client(),
-                                 response_format="top5",
-                                 num_agents=10, batch_size=10, seed=42, cluster_k=2)
-
     # V5 — Score-all-96 + rebalance + stage-2 cap (paper headline).
     v5 = aup.LLMDecisionEngine(params, llm_client=_stub_llm_client(),
-                                 response_format="score_all",
-                                 rebalance_instruction=True,
-                                 stage2_top_k_residences=10,
-                                 num_agents=10, batch_size=10, seed=42, cluster_k=2)
+                               response_format="score_all",
+                               rebalance_instruction=True,
+                               stage2_top_k_residences=10,
+                               num_agents=10, batch_size=10, seed=42, cluster_k=2)
 
     print(f"agent-urban-planning version: {aup.__version__}")
     print()
-    for label, engine in (("V1   Baseline-softmax    ", v1),
-                          ("V2   Baseline-ABM argmax ", v2),
-                          ("V3   Normal-ABM argmax   ", v3),
-                          ("V5.0 LLM top-5           ", v5_0),
-                          ("V5 LLM score-all-96    ", v5)):
+    for label, engine in (("V1 Baseline-softmax     ", v1),
+                          ("V2 Baseline-ABM argmax  ", v2),
+                          ("V3 Normal-ABM argmax    ", v3),
+                          ("V5 LLM score-all-96     ", v5)):
         print(f"  {label}: {engine!r}")
     print()
-    print("All 5 paper variants instantiated successfully.")
+    print("V1, V2, V3, V5 paper variants instantiated successfully.")
+    print("V4 requires a pre-built LLM elicitor — see examples/03_berlin_replication/run_v4_hybrid.py.")
     print("For end-to-end Berlin reproduction, see examples/03_berlin_replication/.")
     return 0
 

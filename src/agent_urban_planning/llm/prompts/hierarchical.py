@@ -21,7 +21,7 @@ and price_bucket).
 Version history:
   * v5-hierarchical-v1 — initial version; sampling used `softmax(scores, T=1)`
     over the already-normalized top-5 which flattened preferences to
-    near-uniform over the top-5. Bug identified during V5.0 post-mortem.
+    near-uniform over the top-5. Bug identified during development.
   * v5-hierarchical-v2 — prompt TEXT unchanged, but downstream sampling
     semantics fixed: at T>=1 raw probabilities pass through as-is
     (no double softmax). Cache entries with v1 and v2 may correspond to

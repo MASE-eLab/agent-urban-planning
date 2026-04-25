@@ -14,11 +14,12 @@ For the LLM-using variants (V4, V5), also install the LLM extras:
 pip install "agent-urban-planning[llm]"
 ```
 
-## Smoke test the 5 paper variants
+## Smoke test the paper variants
 
-The {file}`examples/01_quickstart_two_zone.py` script instantiates all 5
-paper variants (V1, V2, V3, V5.0, V5) using stub LLM clients. Total
-runtime: <1 second.
+The {file}`examples/01_quickstart_two_zone.py` script instantiates V1,
+V2, V3, and V5 using a stub LLM client for V5. (V4 requires a
+pre-built preference elicitor — see the Berlin replication for the
+full pattern.) Total runtime: <1 second.
 
 ```bash
 python examples/01_quickstart_two_zone.py
@@ -29,13 +30,12 @@ Expected output:
 ```
 agent-urban-planning version: 0.1.0
 
-  V1   Baseline-softmax    : UtilityEngine(mode='softmax', noise='frechet', _impl=AhlfeldtUtilityEngine)
-  V2   Baseline-ABM argmax : UtilityEngine(mode='argmax', noise='frechet', _impl=AhlfeldtABMEngine)
-  V3   Normal-ABM argmax   : UtilityEngine(mode='argmax', noise='normal', _impl=AhlfeldtABMEngine)
-  V5.0 LLM top-5           : LLMDecisionEngine(response_format='top5', rebalance_instruction=False, _impl=AhlfeldtHierarchicalLLMEngine)
-  V5 LLM score-all-96    : LLMDecisionEngine(response_format='score_all', rebalance_instruction=True, _impl=AhlfeldtHierarchicalLLMEngine)
+  V1 Baseline-softmax     : UtilityEngine(mode='softmax', noise='frechet', _impl=AhlfeldtUtilityEngine)
+  V2 Baseline-ABM argmax  : UtilityEngine(mode='argmax', noise='frechet', _impl=AhlfeldtABMEngine)
+  V3 Normal-ABM argmax    : UtilityEngine(mode='argmax', noise='normal', _impl=AhlfeldtABMEngine)
+  V5 LLM score-all-96     : LLMDecisionEngine(response_format='score_all', rebalance_instruction=True, _impl=AhlfeldtHierarchicalLLMEngine)
 
-All 5 paper variants instantiated successfully.
+V1, V2, V3, V5 paper variants instantiated successfully.
 ```
 
 If you see this output, your install is healthy.

@@ -14,9 +14,9 @@ Sampling semantics (prompt_version v5-hierarchical-v2, see softmax-fix change):
   * At `softmax_T < 1.0`: apply `exp(log(scores+ε)/T)` to concentrate mass
     on the LLM's top-1 choice. Useful for ablation.
 
-V5.0 composed `normalize → softmax(T=1)` which flattened [0,1]-scale scores
-to near-uniform over the top-5 — see `_scores_to_probs` docstring + change
-`v5-hierarchical-softmax-fix` for the full bug + fix writeup.
+An earlier iteration composed `normalize → softmax(T=1)` which flattened
+[0,1]-scale scores to near-uniform over the top-5 — see the
+`_scores_to_probs` docstring for the full bug + fix writeup.
 
 Key design decisions (see `openspec/changes/v5-full-llm-hierarchical/design.md`):
   • Clustering: kmeans on one-hot encoded demographics, K=50 default.
@@ -160,7 +160,7 @@ class AhlfeldtHierarchicalLLMEngine(AhlfeldtABMEngine):
             else validate_top5_response
         )
         # V5 cost-control knob. `None` = use every residence in the stage-1
-        # distribution (preserves V5.0 behaviour, where stage-1 top-5 → 5
+        # distribution (legacy top-5 behaviour: stage-1 top-5 → 5
         # stage-2 calls/cluster). Set to an int K to cap stage-2 fan-out at
         # the top-K residences (by stage-1 probability) per cluster — used
         # in score-all-96 mode to prevent 20x LLM-call blowup. Residences
@@ -231,7 +231,7 @@ class AhlfeldtHierarchicalLLMEngine(AhlfeldtABMEngine):
         else:
             raise ValueError(
                 f"clustering_algo={self.clustering_algo!r} not supported; "
-                "this V5.0 ships kmeans only. See docs for ablation knobs."
+                "this engine ships kmeans only. See docs for ablation knobs."
             )
         self._cluster_labels = labels
 
@@ -277,7 +277,7 @@ class AhlfeldtHierarchicalLLMEngine(AhlfeldtABMEngine):
     # less price sensitivity in the prompt. 20% is a good default: late-iter
     # Q deltas (< 1%) fall into the same bucket; early-iter Q deltas (up to
     # ~10%) also stay in the same bucket about half the time. Observed in
-    # V5.0 experiments at seed 42.
+    # development-phase experiments at seed 42.
     _PRICE_BUCKET_WIDTH = 0.20
 
     def _cache_key(

@@ -79,8 +79,8 @@ class HybridDecisionEngine:
     See Also:
         :class:`agent_urban_planning.UtilityEngine` — closed-form V1/V2/V3
         baselines (no LLM involvement).
-        :class:`agent_urban_planning.LLMDecisionEngine` — V5.0/V5
-        full-LLM-as-decision-maker pattern.
+        :class:`agent_urban_planning.LLMDecisionEngine` — V5 full-LLM-as-
+        decision-maker pattern.
     """
 
     def __init__(

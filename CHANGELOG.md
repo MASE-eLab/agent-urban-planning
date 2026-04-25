@@ -14,7 +14,7 @@ Initial public release accompanying the NeurIPS Datasets & Benchmarks 2026 submi
 - Decision engines as first-class API classes:
   - `UtilityEngine` — closed-form Cobb-Douglas + Fréchet (V1, V2, V3 via `mode` and `noise` kwargs).
   - `HybridDecisionEngine` — V4 pattern: LLM-elicited preference weights + closed-form choice.
-  - `LLMDecisionEngine` — full LLM-as-decision-maker hierarchical engine with `response_format`, `rebalance_instruction`, `stage2_top_k_residences` kwargs (V5.0 / V5).
+  - `LLMDecisionEngine` — full LLM-as-decision-maker hierarchical engine with `response_format`, `rebalance_instruction`, `stage2_top_k_residences` kwargs (V5).
 - LLM client abstraction: `CodexCliClient`, `ClaudeCodeClient`, `ZaiCodingClient`, `AnthropicClient`, `OpenAIClient`.
 - YAML scenario + agent loader, schema dataclasses.
 - Bundled Singapore + Berlin builtin scenarios (Berlin Ortsteile NPZ files in repo, excluded from PyPI sdist).

@@ -1,12 +1,10 @@
-"""Unified ``LLMDecisionEngine`` API class — V5.0 / V5 via kwargs.
+"""Unified ``LLMDecisionEngine`` API class — V5 via kwargs.
 
 Full LLM-as-decision-maker hierarchical engine. The headline contribution
-of the paper. Configure via constructor kwargs to reproduce V5.0 (top-5
-ranking) or V5 (score-all-96 with rebalance instruction and stage-2
-top-K cap).
+of the paper. Configure via constructor kwargs to reproduce V5
+(score-all-96 with rebalance instruction and stage-2 top-K cap).
 
-Internally delegates to :class:`AhlfeldtHierarchicalLLMEngine`, ported
-from the dev repo.
+Internally delegates to :class:`AhlfeldtHierarchicalLLMEngine`.
 
 Example::
 
@@ -66,7 +64,7 @@ def _select_prompt_and_validator(
 
 
 class LLMDecisionEngine:
-    """Full LLM-as-decision-maker hierarchical engine (V5.0, V5).
+    """Full LLM-as-decision-maker hierarchical engine (V5).
 
     The LLM is queried per agent cluster per market iteration to make
     discrete location decisions directly: stage 1 selects a residence,
@@ -74,28 +72,22 @@ class LLMDecisionEngine:
     paper's headline contribution and the ``aup`` library's core
     extensibility point.
 
-    Configure via constructor kwargs to reproduce V5.0 or V5 from the
-    paper:
-
-    * **V5.0**: ``response_format="top5"`` with default flags (no
-      rebalance instruction, no stage-2 cap).
-    * **V5** (paper headline): ``response_format="score_all"``,
-      ``rebalance_instruction=True``, and ``stage2_top_k_residences=10``
-      to keep stage-2 fan-out tractable when the LLM scores all 96
-      zones in stage 1.
+    Configure via constructor kwargs to reproduce V5 from the paper:
+    ``response_format="score_all"`` + ``rebalance_instruction=True`` +
+    ``stage2_top_k_residences=10`` keeps stage-2 fan-out tractable when
+    the LLM scores all 96 zones in stage 1.
 
     Args:
         params: ``AhlfeldtParams`` instance carrying structural
             elasticities.
         llm_client: An :class:`agent_urban_planning.llm.LLMClient` instance
             (or any object with a ``.complete(user, system="")`` method).
-        response_format: ``"top5"`` for V5.0 (LLM emits top-5 ranking).
-            ``"score_all"`` for V5 (LLM scores all N zones; the paper's
-            headline). Default ``"score_all"`` (V5).
+        response_format: ``"score_all"`` (paper headline) asks the LLM to
+            score every zone; ``"top5"`` is a legacy ablation where the
+            LLM ranks only its top 5. Default ``"score_all"``.
         rebalance_instruction: If ``True``, the stage-1 prompt includes
             an explicit "weight affordability ≥ amenity" instruction.
-            Validated in the V5.3 ablation. Default ``False`` (the V5
-            paper run sets this to ``True``).
+            Default ``False`` (the V5 paper run sets this to ``True``).
         stage2_top_k_residences: When set to an int, stage-2 fan-out is
             capped at the top-K residences per cluster (by stage-1 score),
             preventing the cost blowup from score-all stage-1 producing
@@ -130,16 +122,6 @@ class LLMDecisionEngine:
             ...     cluster_k=50,
             ...     num_agents=1_000_000,
             ...     seed=42,
-            ... )
-
-        V5.0 reproduction (legacy top-5 hierarchical, no rebalance)::
-
-            >>> engine = aup.LLMDecisionEngine(
-            ...     params=scenario.ahlfeldt_params,
-            ...     llm_client=aup.llm.CodexCliClient(),
-            ...     response_format="top5",
-            ...     rebalance_instruction=False,
-            ...     cluster_k=50,
             ... )
 
         Custom prompt builder (research extensibility)::
@@ -227,7 +209,7 @@ class LLMDecisionEngine:
 
     @property
     def rebalance_instruction(self) -> bool:
-        """Whether the stage-1 prompt includes the V5.3-validated rebalance instruction."""
+        """Whether the stage-1 prompt includes the affordability rebalance instruction."""
         return self._rebalance_instruction
 
     def decide_batch(self, *args: Any, **kwargs: Any) -> Any:
