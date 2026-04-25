@@ -20,18 +20,59 @@ results.
 from __future__ import annotations
 
 __version__ = "0.1.0"
+
+# Core re-exports.
+from agent_urban_planning.core.engine import SimulationEngine
+from agent_urban_planning.core.environment import Environment, Zone
+from agent_urban_planning.core.agents import Agent, AgentPopulation, PreferenceWeights, persona_summary
+from agent_urban_planning.core.market import (
+    HousingMarket,
+    AhlfeldtMarket,
+    MarketResult,
+)
+from agent_urban_planning.core.metrics import WelfareMetrics, compute_metrics
+from agent_urban_planning.core.results import SimulationResults, AgentResult
+from agent_urban_planning.core.run_metadata import RunMetadata
+
+# Decision-engine re-exports (Phase 3 will consolidate to API class names).
+from agent_urban_planning.decisions.base import (
+    DecisionEngine,
+    LocationChoice,
+    ZoneChoice,
+)
+from agent_urban_planning.decisions.utility import UtilityEngine
+from agent_urban_planning.decisions.ahlfeldt_utility import AhlfeldtUtilityEngine
+from agent_urban_planning.decisions.ahlfeldt_abm_engine import AhlfeldtABMEngine
+from agent_urban_planning.decisions.ahlfeldt_argmax_hybrid_engine import (
+    AhlfeldtArgmaxHybridEngine,
+)
+from agent_urban_planning.decisions.ahlfeldt_hierarchical_llm_engine import (
+    AhlfeldtHierarchicalLLMEngine,
+)
+
+# Subpackages re-exported as namespaces.
+from agent_urban_planning import core as core
+from agent_urban_planning import decisions as decisions
+from agent_urban_planning import data as data
+from agent_urban_planning import analysis as analysis
+from agent_urban_planning import research as research
+from agent_urban_planning import llm as llm
+
 __all__ = [
     "__version__",
-    # Core re-exports — populated in Phase 2 as core/ modules are ported.
-    # "Environment",
-    # "AgentPopulation",
-    # "Market",
-    # "SimulationEngine",
-    # "WelfareMetrics",
-    # "Results",
-    # Decision-engine re-exports — populated in Phase 3.
-    # "DecisionEngine",
-    # "UtilityEngine",
-    # "HybridDecisionEngine",
-    # "LLMDecisionEngine",
+    # Core
+    "SimulationEngine",
+    "Environment", "Zone",
+    "Agent", "AgentPopulation", "PreferenceWeights", "persona_summary",
+    "HousingMarket", "AhlfeldtMarket", "MarketResult",
+    "WelfareMetrics", "compute_metrics",
+    "SimulationResults", "AgentResult",
+    "RunMetadata",
+    # Decisions (interim — Phase 3 will add UtilityEngine config-driven, HybridDecisionEngine, LLMDecisionEngine)
+    "DecisionEngine", "LocationChoice", "ZoneChoice",
+    "UtilityEngine",
+    "AhlfeldtUtilityEngine", "AhlfeldtABMEngine",
+    "AhlfeldtArgmaxHybridEngine", "AhlfeldtHierarchicalLLMEngine",
+    # Subpackages
+    "core", "decisions", "data", "analysis", "research", "llm",
 ]
