@@ -13,12 +13,45 @@ from agent_urban_planning.data.loaders import AgentDistributionalConfig
 
 @dataclass
 class PreferenceWeights:
+    """Four-axis preference weights for an agent or archetype.
+
+    Captures the relative importance an agent assigns to housing
+    affordability, commute, services/facilities, and amenities. Values
+    are stored unnormalized; call :meth:`normalized` to get a copy
+    summing to 1.
+
+    Attributes:
+        alpha: Weight on housing affordability.
+        beta: Weight on commute disutility.
+        gamma: Weight on services / facilities accessibility.
+        delta: Weight on neighborhood amenities.
+
+    Examples:
+        >>> from agent_urban_planning.core.agents import PreferenceWeights
+        >>> w = PreferenceWeights(alpha=2.0, beta=1.0, gamma=1.0, delta=1.0)
+        >>> w.normalized().alpha
+        0.4
+    """
+
     alpha: float  # housing affordability
     beta: float   # commute
     gamma: float  # services/facilities
     delta: float  # amenities
 
     def normalized(self) -> "PreferenceWeights":
+        """Return a normalized copy whose four weights sum to one.
+
+        Returns:
+            New :class:`PreferenceWeights` whose components are scaled
+            so ``alpha + beta + gamma + delta == 1.0``. If all weights
+            are zero, returns equal weights (0.25 each) to avoid a
+            division-by-zero downstream.
+
+        Examples:
+            >>> from agent_urban_planning.core.agents import PreferenceWeights
+            >>> PreferenceWeights(1.0, 1.0, 1.0, 1.0).normalized().alpha
+            0.25
+        """
         total = self.alpha + self.beta + self.gamma + self.delta
         if total == 0:
             # Edge case: all weights are zero → equal weights as safe fallback.
@@ -34,6 +67,54 @@ class PreferenceWeights:
 
 @dataclass
 class Agent:
+    """One representative household type (a weighted demographic record).
+
+    Each agent represents a slice of the population. Demographic fields
+    drive both the closed-form utility computation (via income and
+    location) and the LLM-elicited persona used by V5 engines (through
+    :func:`persona_summary`). The optional richer demographic fields
+    (education, migration, employment, tenure) are populated only when
+    the agent is sampled from the 10D Berlin joint distribution; legacy
+    engines (V1..V4-B) ignore them.
+
+    Attributes:
+        agent_id: Stable integer identifier across runs.
+        household_size: Number of persons in the household.
+        age_head: Age of the household head (constrained 21-85 in
+            sampling).
+        has_children: Whether the household has any members aged < 18.
+        has_elderly: Whether the household has any members aged >= 65.
+        income: Monthly household income in scenario-currency units.
+        savings: Liquid savings (default ``income * 6``).
+        job_location: Zone name where the agent works (for Singapore
+            scenarios; ignored when the engine optimizes workplace
+            jointly with residence).
+        car_owner: Whether the household owns a car.
+        weight: Population share assigned to this type. Across the full
+            :class:`AgentPopulation` these weights must sum to 1.
+        preferences: Optional :class:`PreferenceWeights` recorded in
+            the JSON output. Most engines ignore this — it is preserved
+            for diagnostic output.
+        home_zone: Planning area where the agent resides (used by
+            engines that need an outside-option reference).
+        education: ``"low"``, ``"mid"``, ``"high"``, or ``None``.
+        migration_background: ``"none"``, ``"EU"``, ``"non-EU"``, or
+            ``None``.
+        employment_status: ``"employed"``, ``"self-employed"``,
+            ``"unemployed"``, ``"retired_or_student"``, or ``None``.
+        tenure: ``"owner"``, ``"renter"``, or ``None``.
+
+    Examples:
+        >>> from agent_urban_planning.core.agents import Agent
+        >>> a = Agent(
+        ...     agent_id=0, household_size=3, age_head=42, has_children=True,
+        ...     has_elderly=False, income=5000.0, savings=30000.0,
+        ...     job_location="CBD", car_owner=False, weight=0.001,
+        ... )
+        >>> a.income
+        5000.0
+    """
+
     agent_id: int
     household_size: int
     age_head: int
@@ -78,16 +159,31 @@ _PERSONA_FIELD_ORDER: tuple[str, ...] = (
 
 
 def persona_summary(agent: "Agent") -> str:
-    """Produce a human-readable one-line persona from an agent's demographics.
+    """Produce a stable, human-readable one-line persona from an agent's demographics.
 
     Fields appear in a fixed order; ``None`` fields are omitted. Output
     format is stable across calls (deterministic given the same agent),
     suitable for use as a cluster-label diagnostic or as the persona
     block in an LLM prompt.
 
-    Example:
-      "38y, 3-person household, has children, mid income, renter, high
-       education, EU background, employed, no car"
+    Args:
+        agent: An :class:`Agent` instance whose demographics are
+            rendered.
+
+    Returns:
+        Comma-separated persona string. Example:
+        ``"38y, 3-person household, has children, mid income, renter,
+        high education, EU background, employed, no car"``.
+
+    Examples:
+        >>> from agent_urban_planning.core.agents import Agent, persona_summary
+        >>> a = Agent(
+        ...     agent_id=0, household_size=2, age_head=30, has_children=False,
+        ...     has_elderly=False, income=5000.0, savings=30000.0,
+        ...     job_location="x", car_owner=True, weight=1.0,
+        ... )
+        >>> persona_summary(a)  # doctest: +ELLIPSIS
+        '30y, 2-person household, no children, ... car owner'
     """
     parts: list[str] = []
     for field_name in _PERSONA_FIELD_ORDER:
@@ -129,7 +225,32 @@ def _income_bucket_label(inc: float) -> str:
 
 
 class AgentPopulation:
-    """Collection of weighted representative agent types."""
+    """Collection of weighted representative agent types.
+
+    Holds the full list of :class:`Agent` instances comprising the
+    simulation's population, indexed by integer position. Each agent
+    carries a ``weight`` that represents its population share; weights
+    must sum to 1.0 across the population. Construct via
+    :meth:`from_config` from a parsed agent YAML, which handles
+    distributional sampling (per-zone Census or single national) or
+    explicit per-agent records.
+
+    Args:
+        agents: List of :class:`Agent` instances. The constructor
+            validates that their weights sum to 1.0 within tolerance.
+
+    Raises:
+        ValueError: If ``agents`` weights do not sum to 1 within
+            ``1e-6``.
+
+    Examples:
+        >>> import agent_urban_planning as aup
+        >>> # config = aup.data.builtin.load_agents("singapore_real_v2")
+        >>> # pop = aup.AgentPopulation.from_config(config)
+        >>> # len(pop)  # number of representative types
+        >>> # for agent in pop:
+        >>> #     ... # iterate over the population
+    """
 
     def __init__(self, agents: list[Agent]):
         self.agents = agents
@@ -158,12 +279,34 @@ class AgentPopulation:
         rng: Optional[np.random.RandomState] = None,
         strict: bool = True,
     ) -> "AgentPopulation":
-        """Generate an agent population from config.
+        """Generate an agent population from a configuration object.
+
+        Dispatches on ``config.mode``: ``"distributional"`` samples
+        agents from per-zone Census distributions (or, for unit-test
+        configs with ``strict=False``, a single national distribution),
+        otherwise loads explicitly declared agent records.
 
         Args:
-            strict: If True (default), REJECT configs without per-zone
-                Census data. Set to False ONLY in unit tests that use
-                small synthetic configs.
+            config: Parsed :class:`AgentDistributionalConfig` from a
+                YAML file.
+            rng: Optional ``numpy.random.RandomState`` for reproducible
+                sampling. If ``None``, a fresh state is created.
+            strict: If ``True`` (default), reject configs without
+                per-zone Census data. Set to ``False`` only in unit
+                tests that use small synthetic configs.
+
+        Returns:
+            A new :class:`AgentPopulation`. Weights are normalized to
+            sum to 1.
+
+        Raises:
+            RuntimeError: When ``strict=True`` and the config lacks
+                per-zone ``zone_distributions``.
+
+        Examples:
+            >>> import agent_urban_planning as aup
+            >>> # config = aup.data.builtin.load_agents("singapore_real_v2")
+            >>> # pop = aup.AgentPopulation.from_config(config, strict=True)
         """
         if config.mode == "distributional":
             # Per-zone Census sampling if zone_distributions is present

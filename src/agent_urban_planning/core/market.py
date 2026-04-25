@@ -60,7 +60,19 @@ class MarketSnapshot:
 
 @dataclass
 class MarketResult:
-    """Result of housing market clearing."""
+    """Equilibrium output of a :class:`HousingMarket` or :class:`AhlfeldtMarket` run.
+
+    Carries the equilibrium prices, the agent-id-keyed allocations,
+    convergence diagnostics, and the per-iteration ``history``. The
+    Ahlfeldt-specific fields (``wages``, ``productivity_A``, ``amenity_B``,
+    ``theta_diagnostic`` etc.) are populated only by Berlin runs;
+    Singapore runs leave them empty.
+
+    Examples:
+        >>> import agent_urban_planning as aup
+        >>> # Typically returned by SimulationEngine.run() rather than built directly.
+        >>> # See the quickstart tutorial for end-to-end usage.
+    """
     prices: dict[str, float]            # equilibrium price per zone (Q for Ahlfeldt)
     allocations: dict[int, ZoneChoice]  # agent_id → zone choice at equilibrium
     convergence_metric: float           # max excess demand at termination
@@ -162,16 +174,46 @@ def _counter_delta(current: int, start: int) -> int:
 class HousingMarket:
     """Elasticity-based tatonnement with adaptive damping and two-segment clearing.
 
-    Each zone has two housing segments:
-      - HDB (public): supply from ``zone.housing_supply``, price adjusted by tatonnement
-      - Private: supply from ``zone.private_supply``, price held exogenous
+    The legacy Singapore-style market clearer. Each zone has two housing
+    segments: HDB (public) supply from ``zone.housing_supply`` whose
+    prices adjust by tatonnement, and private supply from
+    ``zone.private_supply`` whose prices are held exogenous. Agents with
+    income above the HDB income ceiling are routed to the private
+    segment; all others compete for HDB units. Convergence is evaluated
+    on the HDB segment only. Budget constraints are enforced
+    dynamically: at each iteration, each agent's choice set is filtered
+    by affordability at current prices.
 
-    Agents with income > HDB_INCOME_CEILING are routed to the private segment;
-    all others compete for HDB units. Convergence is evaluated on the HDB
-    segment only.
+    Args:
+        price_elasticity: Demand elasticity ``|eta|`` used to size the
+            tatonnement step ``Delta p = (lambda / |eta|) * (excess /
+            supply) * p``. Defaults to ``0.5`` (Phang & Wong 1997 HDB
+            estimate).
+        initial_damping: Starting damping ``lambda``. Adapts each
+            iteration. Defaults to ``0.3``.
+        convergence_threshold: Maximum absolute excess demand at which
+            clearing is declared converged. Defaults to ``0.01``.
+        stall_threshold: Minimum iter-to-iter residual change to avoid
+            being flagged as stalled.
+        stall_window: Consecutive stalled iterations before damping is
+            boosted (and after the boost, the run terminates).
+        max_iterations: Iteration cap on the tatonnement loop.
+        max_price_change_pct: Per-iteration cap on relative price
+            moves. Defaults to ``0.5`` (50%).
+        verbose: Whether to print progress.
 
-    Budget constraints are enforced dynamically: at each iteration, each agent's
-    choice set is filtered by affordability at current prices.
+    Examples:
+        >>> import agent_urban_planning as aup
+        >>> # Typically obtained from SimulationEngine.run() rather than built directly:
+        >>> # market = aup.HousingMarket(price_elasticity=0.5)
+        >>> # result = market.clear(population, environment, engine)
+
+    References:
+        Phang, S.-Y., Wong, W. K. (1997). Government Policies and
+        Private Housing Prices in Singapore. *Urban Studies*.
+
+        Scarf, H. (1973). The Computation of Economic Equilibria.
+        Yale University Press.
     """
 
     def __init__(
@@ -203,7 +245,37 @@ class HousingMarket:
         checkpoint_callback: Optional[Callable[[dict], None]] = None,
         cache_path: Optional[str] = None,
     ) -> MarketResult:
-        """Run tatonnement to find equilibrium prices and allocations."""
+        """Run tatonnement to find equilibrium prices and allocations.
+
+        Iteratively asks the decision engine to allocate the population,
+        measures excess demand per zone, and updates HDB prices via the
+        elasticity rule until either convergence or the stall/iteration
+        cap is reached. Private-segment agents are placed once before
+        the loop because their prices are exogenous.
+
+        Args:
+            population: The :class:`AgentPopulation` to allocate.
+            environment: The :class:`Environment` whose zones price.
+            engine: A :class:`DecisionEngine` invoked once per iteration
+                via ``decide_batch`` (or ``decide`` if no batch path).
+            resume_state: Optional checkpoint dict from a prior run to
+                continue clearing from where it left off.
+            checkpoint_callback: Optional callable receiving a
+                JSON-serializable checkpoint dict at every iteration.
+            cache_path: Optional path to a disk-backed LLM cache, passed
+                to engines that accept caches via ``set_cache``.
+
+        Returns:
+            A :class:`MarketResult` with equilibrium prices, agent
+            allocations, convergence info, and per-iteration history.
+
+        Examples:
+            >>> import agent_urban_planning as aup
+            >>> # market = aup.HousingMarket()
+            >>> # result = market.clear(population, environment, engine)
+            >>> # result.converged
+            True
+        """
         zone_names = environment.zone_names
         agents_list = list(population)
         start_input_tokens = int(getattr(engine, "total_input_tokens", 0) or 0)
@@ -635,11 +707,42 @@ class AhlfeldtMarket(HousingMarket):
     unified floor market per zone with the commercial / residential split
     fixed from observed 2006 values (Decision: fixed θ_i).
 
-    Per-market elasticities are computed from the Ahlfeldt parameters:
-        eta_floor = (1 - beta) * epsilon
-        eta_wage  = 1 / (1 - alpha) + epsilon
-    and can be overridden via scenario-level ``eta_floor_override`` /
-    ``eta_wage_override`` fields.
+    Per-market elasticities are computed from the Ahlfeldt parameters as
+    ``eta_floor = (1 - beta) * epsilon`` and
+    ``eta_wage = 1 / (1 - alpha) + epsilon``, and can be overridden via
+    scenario-level ``eta_floor_override`` / ``eta_wage_override`` fields.
+
+    Args:
+        ahlfeldt_params: Structural parameters loaded from the scenario
+            YAML. Drives elasticities, agglomeration toggle, and the
+            chosen clearing method.
+        initial_damping: Initial Walrasian step damping ``lambda``.
+            Adapts each iteration. Defaults to ``0.3``.
+        convergence_threshold: Maximum absolute excess demand at which
+            both markets are declared converged. Defaults to ``0.01``.
+        stall_threshold: Minimum iter-to-iter change in residual to
+            avoid being flagged as stalled. Defaults to ``1e-6``.
+        stall_window: Consecutive stalled iterations before damping is
+            boosted (and ultimately, the run terminates). Defaults to
+            ``10``.
+        max_iterations: Iteration budget. Defaults to ``1000``.
+        max_price_change_pct: Per-iteration cap on relative price moves
+            for floor prices. Defaults to ``0.5`` (50%).
+        max_price_change_pct_wage: Per-iteration wage cap. Defaults to
+            ``max_price_change_pct`` if ``None``.
+        verbose: When ``True``, prints per-iteration diagnostics.
+
+    Examples:
+        >>> import agent_urban_planning as aup
+        >>> # Typically obtained from the SimulationEngine, not constructed
+        >>> # directly. See SimulationEngine.run() for end-to-end usage.
+        >>> # market = aup.AhlfeldtMarket(scenario.ahlfeldt_params)
+        >>> # result = market.clear(population, environment, engine)
+
+    References:
+        Ahlfeldt, G. M., Redding, S. J., Sturm, D. M., Wolf, N. (2015).
+        The economics of density: Evidence from the Berlin Wall.
+        *Econometrica*, 83(6), 2127-2189.
     """
 
     def __init__(
@@ -751,9 +854,23 @@ class AhlfeldtMarket(HousingMarket):
         """Install or clear a per-iteration progress callback.
 
         Called after every tatonnement iteration with
-        ``fn(iter_idx, max_floor_excess, max_labor_excess, elapsed_seconds)``.
-        Exceptions raised by the callback are suppressed so progress
-        rendering cannot break market clearing.
+        ``fn(iter_idx, max_floor_excess, max_labor_excess,
+        elapsed_seconds)``. Exceptions raised by the callback are
+        suppressed so progress rendering cannot break market clearing.
+        Pass ``None`` to clear a previously installed callback.
+
+        Args:
+            fn: Callable accepting ``(iter_idx, max_floor_excess,
+                max_labor_excess, elapsed_seconds)``, or ``None`` to
+                disable.
+
+        Returns:
+            None.
+
+        Examples:
+            >>> import agent_urban_planning as aup
+            >>> # market = aup.AhlfeldtMarket(scenario.ahlfeldt_params)
+            >>> # market.set_iteration_callback(lambda i, f, l, t: print(i, f, l, t))
         """
         self._iteration_callback = fn
 
@@ -836,12 +953,48 @@ class AhlfeldtMarket(HousingMarket):
         checkpoint_callback: Optional[Callable[[dict], None]] = None,  # noqa: ARG002
         cache_path: Optional[str] = None,
     ) -> MarketResult:
-        """Run joint Q/w tatonnement and return an Ahlfeldt ``MarketResult``.
+        """Run joint Q/w tatonnement and return an Ahlfeldt :class:`MarketResult`.
+
+        Iterates: inject current wages into the engine, run
+        ``decide_batch`` to get joint (residence, workplace) choices,
+        compute floor and labor excess demand, optionally update
+        endogenous productivity / amenity from current density, and
+        update prices either via tatonnement or the closed-form FOC
+        update (when ``clearing_method='foc_direct'`` and
+        ``endogenous_land_use=True``). Returns at convergence or after
+        the iteration cap.
 
         ``resume_state`` and ``checkpoint_callback`` are accepted for
-        protocol compatibility with :class:`HousingMarket` but not used
-        — Ahlfeldt runs are typically short enough (≤200 iterations at
-        Ortsteile resolution) that in-process execution is sufficient.
+        protocol compatibility with :class:`HousingMarket` but ignored
+        — Ahlfeldt runs are typically short enough (<= 200 iterations
+        at Ortsteile resolution) that in-process execution is
+        sufficient.
+
+        Args:
+            population: The :class:`AgentPopulation` to clear over.
+            environment: The :class:`Environment` carrying zones and
+                their Ahlfeldt fundamentals.
+            engine: A decision engine implementing ``decide_batch``.
+                Engines exposing ``set_current_wages`` /
+                ``set_current_productivity`` / ``set_current_amenity``
+                receive per-iteration injection of those state vectors.
+            resume_state: Ignored. Accepted for protocol compatibility.
+            checkpoint_callback: Ignored. Accepted for protocol
+                compatibility.
+            cache_path: Optional path to a disk-backed LLM cache passed
+                to engines that accept caches via ``set_cache``.
+
+        Returns:
+            A :class:`MarketResult` carrying equilibrium prices ``Q``,
+            wages, joint allocations, convergence flags for each market,
+            and the full per-iteration ``history``.
+
+        Examples:
+            >>> import agent_urban_planning as aup  # doctest: +SKIP
+            >>> # market = aup.AhlfeldtMarket(scenario.ahlfeldt_params)
+            >>> # result = market.clear(population, environment, engine)
+            >>> # max(result.prices.values())  # doctest: +SKIP
+            7.42
         """
         zone_names = environment.zone_names
         agents_list = list(population)

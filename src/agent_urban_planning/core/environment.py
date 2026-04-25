@@ -27,6 +27,56 @@ class Facility:
 
 @dataclass
 class Zone:
+    """One geographic unit (planning area or block) in a scenario.
+
+    Carries everything the simulator needs to know about a single
+    location: housing supply, exogenous price level, amenity score,
+    facilities, and optional Ahlfeldt-model fundamentals (productivity
+    ``A_i``, amenity ``B_i``, wage, observed floor price, and the raw
+    pre-agglomeration primitives ``a_i`` and ``b_i``). Most fields are
+    populated from a scenario YAML via :meth:`Environment.from_config`.
+
+    Attributes:
+        name: Unique zone identifier (e.g. ``"Mitte"``, ``"Punggol"``).
+        housing_supply: Number of HDB units available in this zone.
+        housing_base_price: Exogenous starting HDB price.
+        amenity_score: Generic amenity index used by the Singapore-style
+            utility engines.
+        facilities: List of :class:`Facility` instances in this zone.
+        job_density: Employment density used as a proxy for workplace
+            attractiveness.
+        private_supply: Number of private housing units (Singapore
+            two-segment scenarios only).
+        private_base_price: Exogenous starting private-market price.
+        commercial_floor_area: Square meters of commercial floor space
+            (Ahlfeldt scenarios).
+        residential_floor_area: Square meters of residential floor
+            space (Ahlfeldt scenarios).
+        productivity_A: Post-agglomeration productivity ``A_i``.
+        amenity_B: Post-agglomeration amenity ``B_i``.
+        wage_observed: Observed wage at the zone (Ahlfeldt scenarios).
+        floor_price_observed: Observed residential floor price.
+        productivity_fundamental_a: Raw (pre-agglomeration) productivity
+            primitive ``a_i``. When ``endogenous_agglomeration`` is on,
+            the market re-computes ``A_i`` from this each iteration.
+        amenity_fundamental_b: Raw (pre-agglomeration) amenity primitive
+            ``b_i``.
+        total_floor_area: Total square meters of floor (residential +
+            commercial). When ``endogenous_land_use`` is on, the unified
+            price ``P_i`` clears combined demand against this total.
+
+    Examples:
+        >>> from agent_urban_planning.core.environment import Zone, Facility
+        >>> z = Zone(
+        ...     name="Mitte",
+        ...     housing_supply=10000,
+        ...     housing_base_price=1.0,
+        ...     amenity_score=0.8,
+        ... )
+        >>> z.has_facility_type("school")
+        False
+    """
+
     name: str
     housing_supply: int
     housing_base_price: float
@@ -55,9 +105,43 @@ class Zone:
     total_floor_area: float = 0.0
 
     def has_facility_type(self, facility_type: str) -> bool:
+        """Return ``True`` if this zone has at least one facility of ``facility_type``.
+
+        Args:
+            facility_type: Facility category to search for (e.g.
+                ``"school"``, ``"clinic"``).
+
+        Returns:
+            ``True`` when at least one facility of that type is present.
+
+        Examples:
+            >>> from agent_urban_planning.core.environment import Zone, Facility
+            >>> z = Zone(name="x", housing_supply=1, housing_base_price=1.0,
+            ...          amenity_score=0.0)
+            >>> z.facilities.append(Facility(type="school", capacity=10, quality=1.0))
+            >>> z.has_facility_type("school")
+            True
+        """
         return any(f.type == facility_type for f in self.facilities)
 
     def get_facilities_by_type(self, facility_type: str) -> list[Facility]:
+        """Return all facilities of the given type in this zone.
+
+        Args:
+            facility_type: Facility category to filter on.
+
+        Returns:
+            A list of matching :class:`Facility` instances. Empty when
+            no match is found.
+
+        Examples:
+            >>> from agent_urban_planning.core.environment import Zone, Facility
+            >>> z = Zone(name="x", housing_supply=1, housing_base_price=1.0,
+            ...          amenity_score=0.0)
+            >>> z.facilities.append(Facility(type="clinic", capacity=5, quality=0.9))
+            >>> [f.capacity for f in z.get_facilities_by_type("clinic")]
+            [5]
+        """
         return [f for f in self.facilities if f.type == facility_type]
 
 
@@ -118,11 +202,34 @@ class TransportNetwork:
 class Environment:
     """Spatial environment holding zones and transportation network.
 
-    Optionally carries an Ahlfeldt-style dense travel-time matrix keyed by
-    zone name when the scenario is a Berlin replication. The edge-list
-    ``TransportNetwork`` remains the primary interface; ``transport_matrix``
-    is a zero-copy alternative used by ``AhlfeldtUtilityEngine`` for
-    vectorized distance lookups.
+    The geographic backbone of a simulation. Holds the per-zone
+    properties (housing supply, base prices, amenities, facilities, and
+    Ahlfeldt fundamentals where applicable) and a graph-based
+    :class:`TransportNetwork`. Optionally also carries an Ahlfeldt-style
+    dense travel-time matrix keyed by zone name when the scenario is a
+    Berlin replication. The edge-list ``TransportNetwork`` remains the
+    primary interface; ``transport_matrix`` is a zero-copy alternative
+    used by :class:`AhlfeldtUtilityEngine` for vectorized distance
+    lookups.
+
+    Args:
+        zones: List of :class:`Zone` instances comprising the simulation
+            geography.
+        transport: A :class:`TransportNetwork` describing edges between
+            zones.
+        ahlfeldt_params: Optional ``AhlfeldtParams`` describing the
+            structural elasticities of the Berlin model. Present only
+            for Berlin/Ahlfeldt scenarios.
+        transport_matrix: Optional dense ``(N, N)`` travel-time matrix
+            in zone-name order.
+        transport_matrix_index: Zone names corresponding to the rows /
+            columns of ``transport_matrix``.
+
+    Examples:
+        >>> import agent_urban_planning as aup
+        >>> # Typically built from a scenario YAML, not constructed manually:
+        >>> # env = aup.Environment.from_config(scenario)
+        >>> # env.travel_time("Mitte", "Charlottenburg")
     """
 
     def __init__(
@@ -147,6 +254,32 @@ class Environment:
 
     @classmethod
     def from_config(cls, config: ScenarioConfig) -> "Environment":
+        """Build an ``Environment`` from a parsed ``ScenarioConfig``.
+
+        Materializes per-zone records (including Ahlfeldt fundamentals
+        and synthesized total-floor-area where missing), constructs the
+        :class:`TransportNetwork` from edge records, and optionally
+        loads a dense travel-time matrix from ``config.transport_matrix_path``
+        when present.
+
+        Args:
+            config: A loaded ``ScenarioConfig`` with ``zones``,
+                ``transport``, and optional ``ahlfeldt_params`` /
+                ``transport_matrix_path`` fields.
+
+        Returns:
+            A fully wired :class:`Environment` ready for use as the
+            ``base_env`` of a :class:`SimulationEngine`.
+
+        Raises:
+            ValueError: If ``transport_matrix_path`` is set but the
+                resulting matrix shape does not match ``len(zones)``.
+
+        Examples:
+            >>> import agent_urban_planning as aup
+            >>> # scenario = aup.data.builtin.load("singapore_real_v2")
+            >>> # env = aup.Environment.from_config(scenario)
+        """
         zones = [
             Zone(
                 name=zc.name,
@@ -220,11 +353,24 @@ class Environment:
         )
 
     def travel_time(self, origin: str, destination: str) -> float:
-        """Return the travel time between two zones in minutes.
+        """Return the travel time in minutes between two zones.
 
-        Uses the dense ``transport_matrix`` when available (Berlin scenarios);
-        falls back to the edge-list ``TransportNetwork`` otherwise.
-        Returns ``float('inf')`` if no route exists.
+        Uses the dense ``transport_matrix`` when available (Berlin
+        scenarios); falls back to the edge-list ``TransportNetwork``
+        otherwise. Returns ``float('inf')`` if no route exists.
+
+        Args:
+            origin: Source zone name.
+            destination: Destination zone name.
+
+        Returns:
+            Travel time in minutes (``float('inf')`` if disconnected).
+
+        Examples:
+            >>> import agent_urban_planning as aup
+            >>> # env = aup.Environment.from_config(scenario)
+            >>> # env.travel_time("Mitte", "Mitte")
+            0.0
         """
         if self.transport_matrix is not None and origin in self._matrix_index_map and destination in self._matrix_index_map:
             i = self._matrix_index_map[origin]
@@ -234,6 +380,24 @@ class Environment:
         return float(route.time_minutes) if route is not None else float("inf")
 
     def get_zone(self, name: str) -> Zone:
+        """Look up a zone by name.
+
+        Args:
+            name: Zone name (must be present in this environment).
+
+        Returns:
+            The :class:`Zone` with that name.
+
+        Raises:
+            KeyError: If ``name`` is not a known zone in this
+                environment.
+
+        Examples:
+            >>> import agent_urban_planning as aup
+            >>> # env = aup.Environment.from_config(scenario)
+            >>> # zone = env.get_zone("Mitte")
+            >>> # zone.housing_supply
+        """
         if name not in self.zones:
             raise KeyError(f"Zone '{name}' not found")
         return self.zones[name]
@@ -243,9 +407,25 @@ class Environment:
         return list(self.zones.keys())
 
     def apply_policy(self, policy: PolicyConfig) -> "Environment":
-        """Apply a policy and return a new Environment with the changes.
+        """Apply a policy and return a new ``Environment`` with the changes baked in.
 
-        Does not mutate the original environment.
+        Does not mutate the original environment. Adds new
+        :class:`Facility` instances to zones that receive facility
+        investments, and updates transport routes (in both directions)
+        for transit investments.
+
+        Args:
+            policy: A ``PolicyConfig`` describing facility and transit
+                investments.
+
+        Returns:
+            A new :class:`Environment` instance with the policy's
+            investments applied. The original environment is unchanged.
+
+        Examples:
+            >>> import agent_urban_planning as aup
+            >>> # env = aup.Environment.from_config(scenario)
+            >>> # env_after = env.apply_policy(policy)
         """
         new_env = copy.deepcopy(self)
 

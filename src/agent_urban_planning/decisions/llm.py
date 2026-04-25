@@ -77,16 +77,12 @@ class LLMDecisionEngine:
     Configure via constructor kwargs to reproduce V5.0 or V5.4 from the
     paper:
 
-    +---------+--------------------------+-----------------------------+
-    | Variant | response_format          | rebalance + stage2 cap      |
-    +=========+==========================+=============================+
-    | V5.0    | ``"top5"``                | Default (no rebalance)      |
-    +---------+--------------------------+-----------------------------+
-    | V5.4    | ``"score_all"``           | ``rebalance_instruction=    |
-    |         |                          | True``, ``stage2_top_k_     |
-    |         |                          | residences=10`` (paper      |
-    |         |                          | headline)                   |
-    +---------+--------------------------+-----------------------------+
+    * **V5.0**: ``response_format="top5"`` with default flags (no
+      rebalance instruction, no stage-2 cap).
+    * **V5.4** (paper headline): ``response_format="score_all"``,
+      ``rebalance_instruction=True``, and ``stage2_top_k_residences=10``
+      to keep stage-2 fan-out tractable when the LLM scores all 96
+      zones in stage 1.
 
     Args:
         params: ``AhlfeldtParams`` instance carrying structural

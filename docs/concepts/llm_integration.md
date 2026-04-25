@@ -29,7 +29,7 @@ client = aup.llm.ClaudeCodeClient(model="haiku")
 client = aup.llm.AnthropicClient(api_key=os.environ["ANTHROPIC_API_KEY"])
 
 # Pass to any engine that uses an LLM:
-engine = aup.LLMDecisionEngine(params, llm_client=client, ...)
+engine = aup.LLMDecisionEngine(params, llm_client=client)
 ```
 
 ## Async + caching

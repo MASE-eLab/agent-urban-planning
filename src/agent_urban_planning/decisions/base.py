@@ -32,15 +32,34 @@ from agent_urban_planning.core.environment import Environment
 class LocationChoice:
     """An agent's chosen (residence, workplace) pair plus diagnostic utilities.
 
-    Fields:
-        residence: zone ID where the agent lives.
-        workplace: zone ID where the agent works. For Singapore-style
-            scenarios this equals ``agent.job_location``; for Berlin-style
+    The canonical output of any :class:`DecisionEngine`. For Singapore-style
+    scenarios where workplace is fixed as an agent attribute, ``workplace``
+    is set to ``agent.job_location``; for Berlin-style scenarios where
+    workplace is a genuine choice output, it reflects the engine's
+    decision. The diagnostic ``zone_utilities`` mapping supports both flat
+    (single-zone) and namespaced (joint R/W) layouts.
+
+    Attributes:
+        residence: Zone ID where the agent lives (their chosen residence).
+        workplace: Zone ID where the agent works. For Singapore-style
+            scenarios equals ``agent.job_location``; for Berlin-style
             scenarios it is a genuine choice output.
-        utility: realized utility at the chosen pair.
-        zone_utilities: per-zone diagnostic utilities. In single-zone
-            engines keys are residence zone IDs. In joint-choice engines
-            keys may optionally be namespaced ``"R:<zone>"`` / ``"W:<zone>"``.
+        utility: Realized utility at the chosen pair.
+        zone_utilities: Per-zone diagnostic utilities. In single-zone
+            engines, keys are residence zone IDs. In joint-choice engines,
+            keys may optionally be namespaced ``"R:<zone>"`` /
+            ``"W:<zone>"``.
+
+    Examples:
+        >>> from agent_urban_planning import LocationChoice
+        >>> choice = LocationChoice(
+        ...     residence="Mitte",
+        ...     workplace="Charlottenburg",
+        ...     utility=2.71,
+        ...     zone_utilities={"R:Mitte": 1.4, "W:Charlottenburg": 1.31},
+        ... )
+        >>> choice.zone_name  # backward-compat alias for residence
+        'Mitte'
     """
 
     residence: str
@@ -64,13 +83,22 @@ class ZoneChoice(LocationChoice):
     Accepts the legacy keyword-argument style ``ZoneChoice(zone_name=...,
     utility=..., zone_utilities=...)`` and maps ``zone_name`` to both
     ``residence`` and ``workplace`` (since Singapore scenarios conflated
-    them). Also accepts the new ``residence=``/``workplace=`` keywords
-    for forward compatibility.
+    them). Also accepts the new ``residence=`` / ``workplace=`` keywords
+    for forward compatibility. New code should use
+    :class:`LocationChoice` directly; this class remains so that the
+    large existing codebase (utility engines, LLM engines, clustering,
+    cache serialization) continues to work unchanged.
 
-    New code SHOULD use :class:`LocationChoice` directly. This class
-    remains only so that the large existing codebase (utility engines,
-    LLM engines, clustering, cache serialization) continues to work
-    unchanged.
+    Examples:
+        >>> from agent_urban_planning import ZoneChoice
+        >>> legacy = ZoneChoice(zone_name="Mitte", utility=1.5)
+        >>> legacy.residence == legacy.workplace == "Mitte"
+        True
+        >>> # New code SHOULD use the explicit residence/workplace kwargs:
+        >>> modern = ZoneChoice(residence="Mitte", workplace="Charlottenburg",
+        ...                     utility=2.1)
+        >>> modern.workplace
+        'Charlottenburg'
     """
 
     def __init__(
@@ -98,12 +126,21 @@ class ZoneChoice(LocationChoice):
 
 @runtime_checkable
 class DecisionEngine(Protocol):
-    """Interface for agent decision engines.
+    """Protocol every decision engine implements.
 
-    Implementations MUST provide `decide`. They MAY override `decide_batch`
-    for optimized population-level processing; otherwise the default
-    implementation calls `decide` in a loop. They MAY override `set_cache`
-    to accept an optional LLMCallCache from the market loop.
+    Implementations MUST provide :meth:`decide`. They MAY override
+    :meth:`decide_batch` for optimized population-level processing;
+    otherwise the default implementation calls :meth:`decide` in a
+    loop. They MAY override :meth:`set_cache` to accept an optional
+    ``LLMCallCache`` from the market loop. The four canonical
+    library engines (closed-form, hybrid, LLM, clusterized) all
+    satisfy this protocol.
+
+    Examples:
+        >>> import agent_urban_planning as aup
+        >>> # Any of the public engines can be used wherever
+        >>> # `DecisionEngine` is required:
+        >>> # engine: aup.DecisionEngine = aup.UtilityEngine(params)
     """
 
     def decide(
@@ -113,7 +150,30 @@ class DecisionEngine(Protocol):
         zone_options: list[str],
         prices: dict[str, float],
     ) -> LocationChoice:
-        """Choose a location for the agent given the environment and current prices."""
+        """Choose a location for one agent given the environment and current prices.
+
+        Implementations decide on the agent's residence (and workplace,
+        if joint) given the current state of the market. The choice is
+        returned as a :class:`LocationChoice` carrying both selected
+        zones, the realized utility, and per-zone diagnostic utilities.
+
+        Args:
+            agent: The :class:`Agent` whose decision is being made.
+            environment: The :class:`Environment` in which the agent
+                operates.
+            zone_options: Allowed residence (and, where joint,
+                workplace) zones at this market step.
+            prices: Mapping ``zone -> current price`` seen by the agent.
+
+        Returns:
+            A :class:`LocationChoice` describing the agent's chosen
+            (residence, workplace) pair and realized utility.
+
+        Examples:
+            >>> import agent_urban_planning as aup
+            >>> # engine = aup.UtilityEngine(params)
+            >>> # choice = engine.decide(agent, env, zones, prices)  # doctest: +SKIP
+        """
         ...
 
     def decide_batch(
@@ -125,13 +185,44 @@ class DecisionEngine(Protocol):
     ) -> list[LocationChoice]:
         """Choose locations for many agents at once.
 
-        Default implementation loops over `decide` so legacy engines keep
-        working. Override for optimized batching (e.g. async LLM calls).
+        Default implementation loops over :meth:`decide` so legacy
+        engines keep working. Override for optimized batching (e.g.
+        async LLM calls or vectorized per-agent matrix evaluations).
+
+        Args:
+            agents: List of :class:`Agent` instances to decide for.
+            environment: The :class:`Environment` they operate in.
+            zone_options: Allowed zones at this step.
+            prices: Mapping ``zone -> current price``.
+
+        Returns:
+            List of :class:`LocationChoice`, one per input agent and
+            in the same order.
+
+        Examples:
+            >>> import agent_urban_planning as aup
+            >>> # choices = engine.decide_batch(list(pop), env, zones, prices)
         """
         ...
 
     def set_cache(self, cache) -> None:
-        """Inject an optional cache from the market loop. Default is no-op."""
+        """Inject an optional cache from the market loop.
+
+        Engines that need not cache anything ignore the call (the
+        default is no-op). LLM-backed engines typically wire the cache
+        into their request layer here.
+
+        Args:
+            cache: An :class:`agent_urban_planning.llm.LLMCallCache`
+                or compatible object.
+
+        Returns:
+            None.
+
+        Examples:
+            >>> import agent_urban_planning as aup
+            >>> # engine.set_cache(cache)
+        """
         ...
 
 

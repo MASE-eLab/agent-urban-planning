@@ -30,7 +30,65 @@ from agent_urban_planning.core.run_metadata import RunMetadata, WallClock
 
 
 class SimulationEngine:
-    """Orchestrates the full simulation: config → environment → decisions → market → metrics."""
+    """Orchestrate one end-to-end simulation: config to environment to market to metrics.
+
+    Top-level entry point of the library. Wires together a scenario, an
+    agent population, a :class:`DecisionEngine`, and a market clearer
+    (:class:`HousingMarket` for Singapore-style scenarios,
+    :class:`AhlfeldtMarket` for Berlin Cobb-Douglas + Fréchet
+    spatial-equilibrium scenarios). Calling :meth:`run` produces a
+    :class:`SimulationResults` object containing welfare metrics,
+    per-agent allocations, the price-history trajectory, and run
+    metadata.
+
+    Args:
+        scenario: A loaded ``ScenarioConfig`` describing zones, transport
+            network, and (for Berlin) Ahlfeldt structural parameters.
+        agent_config: A ``AgentDistributionalConfig`` describing the
+            agent population (per-zone Census distributions or explicit
+            agent records).
+        engine: An optional :class:`DecisionEngine`. When ``None`` the
+            engine is auto-selected based on ``scenario`` (Berlin
+            scenarios → :class:`AhlfeldtUtilityEngine`; everything else
+            → the legacy Singapore ``UtilityEngine``).
+        seed: Optional integer seed for the agent-sampling RNG. Defaults
+            to ``scenario.simulation.random_seed``.
+        verbose: When ``True``, prints progress and intermediate results.
+        clustering: Optional clustering configuration for wrapping the
+            inner engine in a :class:`ClusterizedDecisionEngine` (used
+            with full-LLM mode to amortize calls across archetypes).
+        llm_provider: Provider name to record in run metadata
+            (``"codex-cli"``, ``"claude-code"``, ``"anthropic"``, ...).
+        llm_model: Model name to record (e.g. ``"haiku"``).
+        llm_temperature: Sampling temperature to record.
+        llm_concurrency: Concurrency setting for the async LLM client.
+        price_elasticity: Override of the floor-price elasticity used by
+            the tatonnement step. Falls back to engine default.
+        initial_damping: Initial Walrasian damping ``lambda``.
+        market_convergence_threshold: Maximum absolute excess demand at
+            which clearing is declared converged.
+        max_market_iterations: Iteration cap on the tatonnement loop.
+
+    Examples:
+        >>> import agent_urban_planning as aup
+        >>> scenario = aup.data.builtin.load("singapore_real_v2")
+        >>> agents = aup.data.builtin.load_agents("singapore_real_v2")
+        >>> sim = aup.SimulationEngine(scenario=scenario, agent_config=agents)
+        >>> results = sim.run(policy=None)
+        >>> sorted(results.metrics.zone_populations.values())  # doctest: +SKIP
+        [0.05, 0.07, 0.13, ...]
+
+    See Also:
+        :class:`agent_urban_planning.UtilityEngine` — the closed-form
+        decision engine used by default for Berlin scenarios.
+        :class:`agent_urban_planning.AhlfeldtMarket` — the two-market
+        tatonnement clearer used for Berlin scenarios.
+
+    References:
+        Ahlfeldt, G. M., Redding, S. J., Sturm, D. M., Wolf, N. (2015).
+        The economics of density: Evidence from the Berlin Wall.
+        *Econometrica*, 83(6), 2127-2189.
+    """
 
     def __init__(
         self,
@@ -134,6 +192,32 @@ class SimulationEngine:
         engine: Optional[DecisionEngine] = None,
         seed: Optional[int] = None,
     ) -> "SimulationEngine":
+        """Build a ``SimulationEngine`` directly from YAML file paths.
+
+        Convenience constructor that loads both the scenario and agent
+        configurations from disk before delegating to the regular
+        constructor. Useful for command-line scripts and notebooks.
+
+        Args:
+            scenario_path: Path to a scenario YAML file (passed to
+                :func:`load_scenario`).
+            agents_path: Path to an agent-population YAML file (passed
+                to :func:`load_agents`).
+            engine: Optional :class:`DecisionEngine` instance. ``None``
+                selects the default engine for the scenario.
+            seed: Optional integer seed.
+
+        Returns:
+            A configured :class:`SimulationEngine` ready to run.
+
+        Examples:
+            >>> import agent_urban_planning as aup
+            >>> sim = aup.SimulationEngine.from_paths(  # doctest: +SKIP
+            ...     "config/scenarios/singapore_real_v2.yaml",
+            ...     "config/agents/singapore_real_v2.yaml",
+            ...     seed=42,
+            ... )
+        """
         return cls(
             scenario=load_scenario(scenario_path),
             agent_config=load_agents(agents_path),
@@ -149,13 +233,50 @@ class SimulationEngine:
         market_checkpoint_callback=None,
         llm_cache_path: Optional[str] = None,
     ) -> SimulationResults:
-        """Run a simulation for a given policy and return full results.
+        """Run one simulation under the given policy and return full results.
 
-        When ``policy`` is ``None``, the scenario's built-in environment is
-        used unchanged — no transit or facility investments are applied.
-        This supports (a) Ahlfeldt replication runs, which have no notion
-        of government investment, and (b) baseline observational runs that
-        report the pre-intervention equilibrium.
+        Applies the policy to the base environment, runs the
+        scenario-appropriate market clearer (HDB/private tatonnement for
+        Singapore, Q + w joint tatonnement for Berlin), assembles per-agent
+        results, and computes welfare metrics. When ``policy`` is ``None``,
+        the scenario's built-in environment is used unchanged — no transit
+        or facility investments are applied. This supports both Ahlfeldt
+        replication runs (which have no notion of government investment)
+        and baseline observational runs that report the pre-intervention
+        equilibrium.
+
+        Args:
+            policy: Optional ``PolicyConfig`` describing transit and
+                facility investments to apply before clearing. ``None``
+                runs the scenario as observed.
+            baseline: Optional pre-computed :class:`SimulationResults`
+                from a prior run. When provided, each agent's
+                ``utility_vs_baseline`` field is filled in with the
+                difference between their realized utility here and in
+                ``baseline``.
+            market_resume: Optional checkpoint state from a prior
+                interrupted run, returned by ``market_checkpoint_callback``
+                in a previous invocation. Lets long LLM runs survive
+                process restarts.
+            market_checkpoint_callback: Optional callable invoked with a
+                JSON-serializable checkpoint dict at every market
+                iteration. Receives a ``dict`` payload that can be passed
+                back as ``market_resume`` to resume.
+            llm_cache_path: Optional path to a disk-backed LLM cache.
+                Reuses cached LLM completions across invocations.
+
+        Returns:
+            A :class:`SimulationResults` object aggregating welfare
+            metrics, per-agent allocations, market price history, and
+            run metadata.
+
+        Examples:
+            >>> import agent_urban_planning as aup  # doctest: +SKIP
+            >>> sim = aup.SimulationEngine(scenario, agent_config)  # doctest: +SKIP
+            >>> baseline = sim.run()  # doctest: +SKIP
+            >>> with_policy = sim.run(policy, baseline=baseline)  # doctest: +SKIP
+            >>> with_policy.metrics.avg_utility - baseline.metrics.avg_utility  # doctest: +SKIP
+            0.04
         """
         if self.verbose:
             if policy is None:
@@ -381,9 +502,27 @@ class SimulationEngine:
         self,
         policies: list[PolicyConfig],
     ) -> dict[str, SimulationResults]:
-        """Run simulation for multiple policies and return results keyed by policy name.
+        """Run one simulation per policy and return results keyed by policy name.
 
-        The first policy is used as the baseline for utility_vs_baseline computation.
+        Iterates over a list of policies, running :meth:`run` for each
+        and threading the first policy's result through as the baseline
+        for ``utility_vs_baseline`` computations on subsequent policies.
+        Useful for cross-policy welfare comparisons in a single call.
+
+        Args:
+            policies: List of ``PolicyConfig`` objects. The first policy
+                in the list is treated as the comparison baseline.
+
+        Returns:
+            A dict mapping each ``policy.name`` to its
+            :class:`SimulationResults`.
+
+        Examples:
+            >>> import agent_urban_planning as aup  # doctest: +SKIP
+            >>> sim = aup.SimulationEngine(scenario, agent_config)  # doctest: +SKIP
+            >>> results = sim.compare_policies([baseline_policy, alt_policy])  # doctest: +SKIP
+            >>> results["alt"].metrics.avg_utility  # doctest: +SKIP
+            2.13
         """
         results = {}
         baseline = None
@@ -399,13 +538,37 @@ class SimulationEngine:
         base_policy: PolicyConfig,
         transit_shares: list[float],
     ) -> list[tuple[float, SimulationResults]]:
-        """Sweep over transit budget share and return results for each.
+        """Sweep over transit budget share and return results for each share level.
 
-        At each share level:
-        - Transit investments: included if share > 0, with travel time improvement
-          scaled proportionally (e.g., 50% budget = halfway between old and new time).
-        - Facility investments: included if share < 1, with capacity and quality
-          scaled proportionally.
+        Generates a series of policies that interpolate between
+        facility-only (``share=0``) and transit-only (``share=1``)
+        allocations of the policy's total budget, and runs the simulation
+        for each. At every share level transit investments scale travel
+        time improvements proportionally (50% budget yields halfway
+        between old and new time), while facility investments scale
+        capacity and quality proportionally.
+
+        Args:
+            base_policy: A baseline ``PolicyConfig`` whose
+                ``transit_investments`` and ``facility_investments`` are
+                used as the upper-budget reference. The policy's
+                ``total_budget`` defines the budget envelope swept.
+            transit_shares: Iterable of fractions in ``[0, 1]`` indicating
+                what share of the total budget goes to transit at each
+                point of the sweep. The complementary ``1 - share`` goes
+                to facilities.
+
+        Returns:
+            List of ``(share, SimulationResults)`` tuples in the order of
+            ``transit_shares``. Use these to build budget-allocation
+            tradeoff plots.
+
+        Examples:
+            >>> import agent_urban_planning as aup
+            >>> # sim = aup.SimulationEngine(scenario, agent_config)
+            >>> # sweep = sim.budget_sweep(policy, [0.0, 0.5, 1.0])
+            >>> # shares = [s for s, _ in sweep]
+            >>> # avg_utilities = [r.metrics.avg_utility for _, r in sweep]
         """
         from copy import deepcopy
 
