@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+*.egg
+.pytest_cache/
+
+# Build
+build/
+dist/
+*.tar.gz
+*.whl
+
+# Virtual envs
+.venv/
+venv/
+.env
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Sphinx docs
+docs/_build/
+docs/api/_autosummary/
+
+# Local outputs (paper-experiment artifacts)
+output/
+.cache/
+
+# Coverage
+.coverage
+htmlcov/
+.tox/

@@ -1,0 +1,33 @@
+# Include essentials
+include README.md
+include LICENSE
+include CITATION.cff
+include CHANGELOG.md
+include MAPPING.md
+include pyproject.toml
+
+# Include source + bundled small data
+recursive-include src *.py
+recursive-include src/agent_urban_planning/data/builtin *.yaml *.csv
+
+# Include small Singapore data (small files only)
+recursive-include data/singapore *.yaml *.csv
+
+# EXCLUDE bundled Berlin data from PyPI sdist (in git, not in PyPI)
+recursive-exclude data/berlin *.npz *.mat
+recursive-exclude data/shapefiles *.shp *.dbf *.shx *.prj *.cpg
+
+# EXCLUDE LLM caches and outputs
+recursive-exclude data/berlin/llm_cache_v5_4 *
+prune output
+prune .cache
+prune .git
+prune docs/_build
+prune .pytest_cache
+
+# Drop dev artifacts
+exclude .gitignore
+exclude .readthedocs.yaml
+recursive-exclude .github *
+recursive-exclude tests *
+recursive-exclude examples *

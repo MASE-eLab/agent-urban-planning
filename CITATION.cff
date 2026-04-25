@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "If you use this software in your research, please cite the paper below."
+type: software
+title: "agent-urban-planning"
+abstract: "An open-source Python library for agent-based urban planning simulation with closed-form, hybrid, and full-LLM decision engines. Reproduces the Berlin V1-V5.4 results from the accompanying NeurIPS Datasets & Benchmarks paper."
+authors:
+  - family-names: "TBD"
+    given-names: "TBD"
+version: 0.1.0
+date-released: "2026-04-25"
+license: MIT
+repository-code: "https://github.com/TBD/agent-urban-planning"
+url: "https://agent-urban-planning.readthedocs.io"
+keywords:
+  - "agent-based modeling"
+  - "urban planning"
+  - "spatial equilibrium"
+  - "large language models"
+  - "Ahlfeldt 2015"
+preferred-citation:
+  type: conference-paper
+  title: "TBD — paper title"
+  year: 2026
+  collection-title: "Advances in Neural Information Processing Systems Datasets & Benchmarks Track"
+  authors:
+    - family-names: "TBD"
+      given-names: "TBD"
