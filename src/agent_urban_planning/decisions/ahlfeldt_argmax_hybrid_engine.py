@@ -39,7 +39,40 @@ EPSILON_DEFAULT = 6.6941
 
 
 class AhlfeldtArgmaxHybridEngine(AhlfeldtABMEngine):
-    """Pure argmax, no shock, per-type β_k/κ_k from LLM-elicited preferences."""
+    """Pure argmax with LLM-elicited per-type ``beta_k`` / ``kappa_k`` preferences.
+
+    The V4-B engine. Combines per-type heterogeneous preferences from
+    Run 1-H's elicitation pipeline with the aggregate-from-counts
+    pattern of :class:`AhlfeldtABMEngine`, but with no Fréchet / Normal
+    / shock added to ``V_ij``. For each demographic type ``k`` the
+    indirect utility is
+
+    ::
+
+        V_ij(k) = log B_i + log w_j - (1 - beta_k) log Q_i - kappa_k * tau_ij
+
+    and the choice ``(i*_k, j*_k)`` is the deterministic argmax. The
+    aggregate empirical choice matrix passed to
+    :class:`AhlfeldtMarket.clear` is the count of types in each cell.
+    Most users should configure this via :class:`HybridDecisionEngine`.
+
+    Args:
+        params: Structural Ahlfeldt parameters.
+        elicitor: Object exposing ``elicit_batch(agents, cache_dir,
+            verbose)`` that returns per-agent preference weights
+            (e.g. ``simulator.decisions.elicitation.LLMPreferenceElicitor``).
+        preference_cache_dir: Directory for caching elicited
+            preferences across runs.
+        clip_warn_threshold: Fraction of clipped scaling factors above
+            which a warning is logged.
+        seed: Optional integer seed.
+        **kwargs: Forwarded to :class:`AhlfeldtABMEngine`.
+
+    Examples:
+        >>> import agent_urban_planning as aup
+        >>> # Prefer the public wrapper:
+        >>> # engine = aup.HybridDecisionEngine(params, elicitor=elicitor)
+    """
 
     def __init__(
         self,
@@ -68,11 +101,34 @@ class AhlfeldtArgmaxHybridEngine(AhlfeldtABMEngine):
     # as AhlfeldtHybridEngine).
     # ------------------------------------------------------------------
     def ensure_elicitation(self, agents: list[Agent], verbose: bool = True) -> None:
-        """Elicit LLM preferences and compute per-type β_k, κ_k.
+        """Elicit LLM preferences and compute per-type ``beta_k``, ``kappa_k``.
 
         Idempotent: re-calling with the same agent set is a no-op.
-        `verbose=True` (default) enables the elicitor's progress bar and
-        incremental cache writes visible via file count in preference_cache_dir.
+        On first call the configured elicitor is invoked once per
+        agent type, results are cached on disk under
+        ``self.preference_cache_dir``, and weight-weighted
+        renormalization is applied across the four preference axes
+        (housing, commute, services, amenities). Per-type ``beta_k``
+        and ``kappa_k`` are stored in ``self._type_params``.
+
+        Args:
+            agents: List of :class:`Agent` instances.
+            verbose: When ``True`` (default), enables the elicitor's
+                progress bar and incremental cache writes.
+
+        Returns:
+            None. Mutates ``self._type_params`` and
+            ``self._elicited_agent_ids``.
+
+        Raises:
+            ValueError: If ``self.elicitor`` is ``None``.
+            RuntimeError: If a per-axis renormalization mean is
+                non-positive (indicates degenerate elicitation).
+
+        Examples:
+            >>> import agent_urban_planning as aup
+            >>> # engine = aup.HybridDecisionEngine(params, elicitor=el)
+            >>> # engine.ensure_elicitation(list(population))
         """
         ids = {int(a.agent_id) for a in agents}
         if self._elicited_agent_ids == ids and self._type_params:
@@ -160,6 +216,30 @@ class AhlfeldtArgmaxHybridEngine(AhlfeldtABMEngine):
         zone_options: list[str],
         prices: dict,
     ) -> list[LocationChoice]:
+        """Pure argmax over per-type ``V_ij(k)`` with LLM-elicited preferences.
+
+        Builds per-type ``V_ij`` matrices from log B, log w, log Q, and
+        ``tau``, takes the deterministic argmax for each agent type,
+        and accumulates the empirical choice matrix in
+        ``self.last_choice_probabilities`` for consumption by
+        :class:`AhlfeldtMarket`. Triggers
+        :meth:`ensure_elicitation` on first call.
+
+        Args:
+            agents: List of :class:`Agent` instances to decide for.
+            environment: The :class:`Environment` carrying zones.
+            zone_options: Allowed zone names.
+            prices: Mapping ``zone -> Q_i``.
+
+        Returns:
+            List of :class:`LocationChoice`, one per input agent and
+            in the same order.
+
+        Examples:
+            >>> import agent_urban_planning as aup
+            >>> # engine = aup.HybridDecisionEngine(params, elicitor=el)
+            >>> # choices = engine.decide_batch(agents, env, zones, prices)
+        """
         if not agents:
             return []
 
@@ -298,5 +378,20 @@ class AhlfeldtArgmaxHybridEngine(AhlfeldtABMEngine):
         return results
 
     def type_parameters(self) -> dict[int, dict]:
-        """Return per-type scaling parameters for Table B reporting."""
+        """Return a snapshot of the per-type scaling parameters.
+
+        Each type's record contains the scaled ``beta`` and
+        ``kappa``, the raw LLM scores per axis (``alpha_Q``,
+        ``alpha_tau``, ``alpha_B``, ``alpha_w``), and the per-axis
+        renormalized scaling factors (``scaling_Q``, ``scaling_tau``).
+        Used for diagnostic output and for paper tables.
+
+        Returns:
+            Dict mapping ``agent_id -> per-type parameter dict``.
+
+        Examples:
+            >>> import agent_urban_planning as aup
+            >>> # engine.ensure_elicitation(agents)
+            >>> # engine.type_parameters()[0]["beta"]
+        """
         return dict(self._type_params)

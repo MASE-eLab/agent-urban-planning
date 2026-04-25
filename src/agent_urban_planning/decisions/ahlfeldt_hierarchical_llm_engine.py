@@ -64,7 +64,51 @@ logger = logging.getLogger(__name__)
 
 
 class AhlfeldtHierarchicalLLMEngine(AhlfeldtABMEngine):
-    """LLM-inside-the-loop decision engine with clustering + hierarchical prompts."""
+    """LLM-as-decision-maker engine with clustering and two-stage prompts.
+
+    The full V5 / V5.4 engine. Replaces ``V[i, j]`` entirely with an
+    LLM call made per cluster per market iteration. Stage 1 selects a
+    residence; stage 2 selects a workplace conditional on residence.
+    Returned scores become sampling probabilities (via
+    ``_scores_to_probs``) and are sampled ``M = num_agents`` times to
+    build the empirical ``last_choice_probabilities`` matrix consumed
+    by :class:`AhlfeldtMarket`.
+
+    Cache namespace: ``.cache/llm_v5_hierarchical/``. Most users should
+    configure this through :class:`LLMDecisionEngine`.
+
+    Args:
+        params: Structural Ahlfeldt parameters.
+        llm_client: An LLM client object (``.complete(user, system="")``
+            returning a string).
+        cluster_k: Number of clusters used in stage-1 prompt grouping.
+        clustering_algo: Clustering algorithm; only ``"kmeans"`` is
+            currently supported.
+        zone_name_map: Optional ``synthetic_id -> real_name`` mapping
+            for prompt-side zone naming.
+        cache_dir: Directory where stage-1 / stage-2 LLM call results
+            are persisted.
+        softmax_T: Temperature applied to LLM-returned scores.
+        max_retries: Retry budget on parse errors per LLM call.
+        prompt_version: String identifier baked into cache keys.
+        llm_concurrency: Max parallel LLM calls.
+        progress_callback: Optional ``(stage, done, total, retries)``
+            callback for progress reporting.
+        seed: Optional integer seed.
+        prompt_builder_stage1: Optional override for the stage-1
+            prompt builder.
+        response_validator_stage1: Optional override for the stage-1
+            response validator.
+        stage2_top_k_residences: Optional cap on stage-2 fan-out (used
+            in V5.4 score-all mode).
+        **parent_kwargs: Forwarded to :class:`AhlfeldtABMEngine`.
+
+    Examples:
+        >>> import agent_urban_planning as aup
+        >>> # Prefer the public wrapper:
+        >>> # engine = aup.LLMDecisionEngine(params, llm_client=client,
+        >>> #                                response_format="score_all")
+    """
 
     def __init__(
         self,
@@ -151,6 +195,29 @@ class AhlfeldtHierarchicalLLMEngine(AhlfeldtABMEngine):
     # Clustering
     # ------------------------------------------------------------------
     def ensure_clustering(self, agents: list[Agent]) -> None:
+        """Build (or reuse) the cluster assignments for the given agent set.
+
+        Idempotent: re-calling with the same agent set is a no-op.
+        On first call the agents are one-hot encoded and clustered
+        with the configured algorithm (currently only ``kmeans``);
+        ``self._cluster_labels``, ``self._cluster_personas``, and
+        ``self._cluster_weights`` are populated.
+
+        Args:
+            agents: List of :class:`Agent` instances.
+
+        Returns:
+            None.
+
+        Raises:
+            ValueError: If ``self.clustering_algo`` is not supported.
+            RuntimeError: If the cluster weights sum to zero.
+
+        Examples:
+            >>> import agent_urban_planning as aup
+            >>> # engine = aup.LLMDecisionEngine(params, llm_client=client)
+            >>> # engine.ensure_clustering(list(population))
+        """
         ids = {int(a.agent_id) for a in agents}
         if self._agents_snapshot_ids == ids and self._cluster_labels is not None:
             return
@@ -382,6 +449,33 @@ class AhlfeldtHierarchicalLLMEngine(AhlfeldtABMEngine):
         zone_options: list[str],
         prices: dict,
     ) -> list[LocationChoice]:
+        """Issue stage-1 + stage-2 LLM calls and sample per-agent (R, W) choices.
+
+        For each cluster, issues one stage-1 LLM call (residence
+        ranking / scoring) plus up to ``stage2_top_k_residences``
+        stage-2 calls (workplace conditional on residence). Cached
+        results are reused across iterations via the in-memory and
+        on-disk caches keyed by ``(cluster, stage, residence,
+        prompt_version, price_bucket, wage_bucket)``. Returned scores
+        are converted to sampling probabilities and sampled
+        ``num_agents`` times to populate
+        ``self.last_choice_probabilities``.
+
+        Args:
+            agents: List of :class:`Agent` instances.
+            environment: The :class:`Environment` carrying zones.
+            zone_options: Allowed zone names.
+            prices: Mapping ``zone -> Q_i``.
+
+        Returns:
+            List of :class:`LocationChoice`, one per input agent and
+            in the same order.
+
+        Examples:
+            >>> import agent_urban_planning as aup
+            >>> # engine = aup.LLMDecisionEngine(params, llm_client=client)
+            >>> # choices = engine.decide_batch(agents, env, zones, prices)
+        """
         if not agents:
             return []
 
@@ -695,6 +789,19 @@ class AhlfeldtHierarchicalLLMEngine(AhlfeldtABMEngine):
         return P_agg, HR_count, HM_count
 
     def cluster_personas(self) -> list[str]:
+        """Return a copy of the per-cluster persona strings.
+
+        Each persona is a one-line :func:`persona_summary` of the
+        highest-weight agent in the cluster, used as the persona block
+        in stage-1 prompts. Useful for diagnostic logging.
+
+        Returns:
+            List of persona strings, one per cluster.
+
+        Examples:
+            >>> import agent_urban_planning as aup
+            >>> # engine.cluster_personas()  # one persona per cluster
+        """
         return list(self._cluster_personas)
 
 

@@ -231,7 +231,28 @@ class LLMDecisionEngine:
         return self._rebalance_instruction
 
     def decide_batch(self, *args: Any, **kwargs: Any) -> Any:
-        """Forward to the underlying implementation's ``decide_batch``."""
+        """Forward to the underlying implementation's ``decide_batch``.
+
+        Transparently forwards to
+        :meth:`AhlfeldtHierarchicalLLMEngine.decide_batch`. Each call
+        issues one stage-1 LLM call per agent cluster (residence) plus
+        up to ``stage2_top_k_residences`` stage-2 calls per cluster
+        (workplace conditional on residence), with caching on price
+        buckets to amortize costs across market iterations.
+
+        Args:
+            *args: Positional arguments forwarded unchanged.
+            **kwargs: Keyword arguments forwarded unchanged.
+
+        Returns:
+            List of :class:`agent_urban_planning.LocationChoice`, one
+            per input agent and in the same order.
+
+        Examples:
+            >>> import agent_urban_planning as aup
+            >>> # engine = aup.LLMDecisionEngine(params, llm_client=client)
+            >>> # choices = engine.decide_batch(agents, env, zones, prices)
+        """
         return self._impl.decide_batch(*args, **kwargs)
 
     def __getattr__(self, name: str) -> Any:

@@ -54,7 +54,46 @@ GUMBEL_VARIANCE = math.pi ** 2 / 6.0  # ≈ 1.6449
 
 
 class AhlfeldtABMEngine(AhlfeldtUtilityEngine):
-    """Monte Carlo argmax engine with configurable shock distribution."""
+    """Monte Carlo argmax decision engine with configurable shock distribution.
+
+    The ABM substitute for V1's closed-form softmax. Drives paper
+    variants V2 (Fréchet shocks) and V3 (variance-matched Gaussian
+    shocks). Replaces the Fréchet softmax step with an explicit
+    per-agent argmax over drawn shocks, while keeping the rest of the
+    Ahlfeldt FOC machinery (housing market clearing, firm labor FOC)
+    unchanged. The exposed empirical choice matrix
+    ``last_choice_probabilities`` lets :class:`AhlfeldtMarket` consume
+    the result as if it came from the closed-form path. Most users
+    should configure this through :class:`UtilityEngine` rather than
+    instantiating it directly.
+
+    Args:
+        params: Structural parameters.
+        shock_distribution: ``"frechet"`` for V2 or ``"normal"`` for V3
+            (variance-matched to Gumbel so V2 vs V3 is a pure shape
+            test).
+        num_agents: Number of Monte Carlo replicates ``M``.
+        batch_size: Per-batch chunk size for memory bookkeeping.
+        seed: Optional integer seed. Passed to the parent class.
+        store_agent_samples: Cap on per-agent sample records to retain
+            for diagnostics. ``0`` (default) skips sampling.
+        **kwargs: Forwarded to :class:`AhlfeldtUtilityEngine`.
+
+    Raises:
+        ValueError: If ``shock_distribution`` is not ``"frechet"`` /
+            ``"normal"``, or if ``num_agents`` / ``batch_size`` is
+            non-positive.
+
+    Examples:
+        >>> import agent_urban_planning as aup
+        >>> # Prefer the public wrapper:
+        >>> # engine = aup.UtilityEngine(params, mode="argmax", noise="frechet")
+
+    References:
+        Ahlfeldt, G. M., Redding, S. J., Sturm, D. M., Wolf, N. (2015).
+        The economics of density: Evidence from the Berlin Wall.
+        *Econometrica*, 83(6), 2127-2189.
+    """
 
     def __init__(
         self,
@@ -143,12 +182,34 @@ class AhlfeldtABMEngine(AhlfeldtUtilityEngine):
         zone_options: list[str],
         prices: dict,
     ) -> list[LocationChoice]:
-        """Run M × argmax over shocks, aggregate, expose empirical P.
+        """Run ``M`` independent argmax-over-shocks draws and aggregate the results.
 
-        ``agents`` is the canonical agent list (typically length 1 —
-        a single representative type — since preferences are homogeneous
-        across all M Monte Carlo replicates). The number of MC agents is
-        controlled by ``self.num_agents``, not by ``len(agents)``.
+        Builds a shared utility matrix ``V[i, j]`` once, then in batches
+        of ``self.batch_size`` draws independent (N, N) shock tensors,
+        adds them to ``V``, and takes per-agent argmax to produce the
+        empirical choice matrix consumed by :class:`AhlfeldtMarket`.
+
+        Args:
+            agents: Canonical agent list (typically length 1 — a
+                single representative type — since preferences are
+                homogeneous across all M Monte Carlo replicates).
+                The number of MC agents is controlled by
+                ``self.num_agents``, not ``len(agents)``.
+            environment: The :class:`Environment` carrying zones and
+                travel-time matrix.
+            zone_options: Allowed zones.
+            prices: Mapping ``zone -> Q_i``.
+
+        Returns:
+            List of :class:`LocationChoice`, one per input agent.
+            ``self.last_choice_probabilities`` is set to the empirical
+            ``M``-sample choice matrix.
+
+        Examples:
+            >>> import agent_urban_planning as aup
+            >>> # engine = aup.UtilityEngine(params, mode="argmax", noise="frechet",
+            >>> #                            num_agents=1_000_000)
+            >>> # choices = engine.decide_batch([rep_agent], env, zones, prices)
         """
         if not agents:
             return []

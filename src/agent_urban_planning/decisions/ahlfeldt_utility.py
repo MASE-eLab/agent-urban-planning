@@ -40,23 +40,55 @@ from agent_urban_planning.core.environment import Environment
 
 
 class AhlfeldtUtilityEngine:
-    """Cobb-Douglas + Fréchet joint residence-workplace engine.
+    """Cobb-Douglas + Fréchet joint residence-workplace decision engine.
 
-    Three code paths depending on scenario scale and the `sampling_method`
-    kwarg:
+    The closed-form softmax engine driving paper variant V1. Implements
+    the Ahlfeldt et al. (2015) indirect utility ``ln u_ij = ln B_i +
+    ln w_j - (1 - beta) * ln Q_i - kappa * tau_ij`` and dispatches
+    sampling to one of three paths depending on scenario scale and
+    the ``sampling_method`` kwarg:
 
-    - ``gumbel`` (small-N default) — per-agent ``N × N`` Gumbel shock
-      matrix stored in ``_shock_cache``; argmax over ``log_Phi + g/ε``.
-      Used for Bezirke (N=23) and Ortsteile (N=97) where memory is trivial.
-    - ``multinomial`` (factorized, large-N default) — shared ``log_Phi``
+    * ``gumbel`` (small-N default) — per-agent ``N x N`` Gumbel shock
+      matrix stored in ``_shock_cache``; argmax over
+      ``log_Phi + g / epsilon``. Used for Bezirke (N=23) and
+      Ortsteile (N=97) where memory is trivial.
+    * ``multinomial`` (factorized, large-N default) — shared ``log_Phi``
       computed once per ``decide_batch`` call; each agent samples from
-      ``softmax(ε · log_Phi)`` via ``rng.choice(N², p=P_flat)``. Memory
-      footprint is independent of agent count; used at block scale (N=12k).
-    - ``deterministic`` — continuum-limit interpretation: each agent
-      contributes fractional weight ``P_ij · weight`` to every (i, j).
-      Matches Ahlfeldt's closed-form aggregate equilibrium exactly, no
-      Monte Carlo noise. Used as the PRIMARY block-level path for
+      ``softmax(epsilon * log_Phi)`` via inverse-CDF lookup. Memory
+      footprint is independent of agent count; used at block scale
+      (N=12k).
+    * ``deterministic`` — continuum-limit interpretation: each agent
+      contributes fractional weight ``P_ij * weight`` to every (i, j).
+      Matches Ahlfeldt's closed-form aggregate equilibrium exactly with
+      zero Monte Carlo noise. Used as the primary block-level path for
       pack-reproducing results.
+
+    Most users should configure this through :class:`UtilityEngine`
+    rather than instantiating it directly.
+
+    Args:
+        params: Structural parameters (``alpha``, ``beta``, ``epsilon``,
+            ``kappa``, ...).
+        seed: Optional integer seed for the per-agent shock RNG.
+        large_N_threshold: Size at which auto-dispatch switches from
+            ``gumbel`` to ``multinomial``. Defaults to ``200``.
+        budget_constraint: Whether to mask out (residence, workplace)
+            pairs that violate a loose Cobb-Douglas affordability check.
+        sampling_method: ``"auto"`` / ``"gumbel"`` / ``"multinomial"``.
+        deterministic: When ``True``, force the continuum-limit path
+            regardless of ``sampling_method``.
+        dtype: ``"float32"`` or ``"float64"``.
+
+    Examples:
+        >>> import agent_urban_planning as aup
+        >>> # Prefer the public wrapper for V1 reproduction:
+        >>> # engine = aup.UtilityEngine(params, mode="softmax")
+        >>> # The advanced class is used internally by that wrapper.
+
+    References:
+        Ahlfeldt, G. M., Redding, S. J., Sturm, D. M., Wolf, N. (2015).
+        The economics of density: Evidence from the Berlin Wall.
+        *Econometrica*, 83(6), 2127-2189.
     """
 
     def __init__(
@@ -119,31 +151,83 @@ class AhlfeldtUtilityEngine:
     # Protocol: set_cache (no-op — this engine doesn't use LLM cache)
     # ------------------------------------------------------------------
     def set_cache(self, cache) -> None:
+        """Accept and discard a cache reference (no-op for this engine).
+
+        :class:`AhlfeldtUtilityEngine` runs entirely closed-form and
+        does not use an LLM cache. Implements the protocol to keep
+        market loops uniform.
+
+        Args:
+            cache: Ignored.
+
+        Returns:
+            None.
+
+        Examples:
+            >>> import agent_urban_planning as aup
+            >>> # engine = aup.AhlfeldtUtilityEngine(params)
+            >>> # engine.set_cache(None)  # safe no-op
+        """
         return None
 
     # ------------------------------------------------------------------
     # Public state injection
     # ------------------------------------------------------------------
     def set_current_wages(self, wages: dict[str, float]) -> None:
-        """Inject current wage vector from the market loop."""
+        """Inject the current wage vector from the market loop.
+
+        Called by :class:`AhlfeldtMarket` once per iteration before
+        ``decide_batch`` so the engine can use the freshly updated
+        wages in its utility computation. Missing keys fall back to
+        ``Zone.wage_observed`` at utility-computation time.
+
+        Args:
+            wages: Mapping ``zone -> wage`` for the current iteration.
+
+        Returns:
+            None.
+
+        Examples:
+            >>> import agent_urban_planning as aup
+            >>> # engine.set_current_wages({"Mitte": 1.1, "Charlottenburg": 0.9})
+        """
         self._current_wages = dict(wages)
 
     def set_current_productivity(self, A: dict[str, float]) -> None:
-        """Inject per-zone productivity A_i from the market loop.
+        """Inject per-zone productivity ``A_i`` from the market loop.
 
-        Called each iteration by AhlfeldtMarket when endogenous
-        agglomeration is active. Keys are zone names; values are the
-        damped A_i after the per-iteration update. Missing keys fall
-        back to Zone.productivity_A at utility-computation time.
+        Called each iteration by :class:`AhlfeldtMarket` when
+        endogenous agglomeration is active. Missing keys fall back to
+        ``Zone.productivity_A`` at utility-computation time.
+
+        Args:
+            A: Mapping ``zone -> A_i`` (damped post-update productivity).
+
+        Returns:
+            None.
+
+        Examples:
+            >>> import agent_urban_planning as aup
+            >>> # engine.set_current_productivity({"Mitte": 1.5})
         """
         self._current_productivity = dict(A)
 
     def set_current_amenity(self, B: dict[str, float]) -> None:
-        """Inject per-zone amenity B_i from the market loop.
+        """Inject per-zone amenity ``B_i`` from the market loop.
 
-        Mirrors set_current_productivity. The indirect-utility formula
-        reads ln B_i via this injection when present; falls back to
-        Zone.amenity_B per zone for missing keys.
+        Mirrors :meth:`set_current_productivity`. The indirect-utility
+        formula reads ``ln B_i`` from this injection when present;
+        otherwise falls back to ``Zone.amenity_B`` per zone.
+
+        Args:
+            B: Mapping ``zone -> B_i`` (damped post-update amenity).
+
+        Returns:
+            None.
+
+        Examples:
+            >>> import agent_urban_planning as aup
+            >>> # engine.set_current_amenity({"Mitte": 2.1})
         """
         self._current_amenity = dict(B)
 
@@ -168,7 +252,29 @@ class AhlfeldtUtilityEngine:
         zone_options: list[str],
         prices: dict[str, float],
     ) -> LocationChoice:
-        """Single-agent decide — delegates to batch for consistency."""
+        """Choose a (residence, workplace) pair for a single agent.
+
+        Delegates to :meth:`decide_batch` with a single-element list,
+        so that single-agent and batch paths share the same numerical
+        kernel.
+
+        Args:
+            agent: The :class:`Agent` to decide for.
+            environment: The :class:`Environment` carrying zones and
+                travel-time matrix.
+            zone_options: Allowed zone names.
+            prices: Mapping ``zone -> floor price Q_i``.
+
+        Returns:
+            A :class:`LocationChoice` with the chosen residence,
+            workplace, realized utility, and per-zone diagnostic
+            utilities.
+
+        Examples:
+            >>> import agent_urban_planning as aup
+            >>> # engine = aup.AhlfeldtUtilityEngine(params)
+            >>> # choice = engine.decide(agent, env, zones, prices)
+        """
         return self.decide_batch([agent], environment, zone_options, prices)[0]
 
     def decide_batch(
@@ -178,11 +284,35 @@ class AhlfeldtUtilityEngine:
         zone_options: list[str],
         prices: dict[str, float],
     ) -> list[LocationChoice]:
-        """Joint (R, W) choice for a batch of agents.
+        """Choose joint (residence, workplace) pairs for a batch of agents.
 
-        ``prices`` holds residential floor prices Q_i keyed by zone name.
-        Current wages are read from :attr:`_current_wages` (set via
-        :meth:`set_current_wages`) or fall back to ``zone.wage_observed``.
+        Builds the shared ``log u_ij`` matrix once from the current
+        prices, wages, productivity and amenity vectors, then dispatches
+        to one of three sampling paths
+        (gumbel / multinomial / deterministic) depending on scale and
+        the engine's ``sampling_method`` / ``deterministic`` flags.
+
+        ``prices`` holds residential floor prices ``Q_i`` keyed by zone
+        name. Current wages are read from the value set via
+        :meth:`set_current_wages` or fall back to ``Zone.wage_observed``.
+
+        Args:
+            agents: List of :class:`Agent` instances to decide for.
+            environment: The :class:`Environment` they operate in.
+            zone_options: Allowed residence and workplace zone names.
+            prices: Mapping ``zone -> Q_i`` (residential floor price).
+
+        Returns:
+            List of :class:`LocationChoice`, one per input agent. Order
+            matches ``agents``. The deterministic path additionally
+            populates ``self.last_choice_probabilities`` with the full
+            ``(N, N)`` choice-probability matrix consumed by
+            :class:`AhlfeldtMarket` for continuum aggregation.
+
+        Examples:
+            >>> import agent_urban_planning as aup
+            >>> # engine = aup.AhlfeldtUtilityEngine(params, deterministic=True)
+            >>> # choices = engine.decide_batch(agents, env, zones, prices)
         """
         if not agents:
             return []
@@ -613,5 +743,17 @@ class AhlfeldtUtilityEngine:
     # Optional: reset shock cache (for Monte Carlo replicates)
     # ------------------------------------------------------------------
     def clear_shock_cache(self) -> None:
+        """Drop cached per-agent Gumbel shocks.
+
+        Useful between Monte Carlo replicates: each replicate then
+        regenerates fresh shocks from the (seeded) sub-RNGs.
+
+        Returns:
+            None.
+
+        Examples:
+            >>> import agent_urban_planning as aup
+            >>> # engine.clear_shock_cache()
+        """
         self._shock_cache.clear()
         self._shock_cache_n_zones = None

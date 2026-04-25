@@ -148,7 +148,26 @@ class UtilityEngine:
         return self._noise
 
     def decide_batch(self, *args: Any, **kwargs: Any) -> Any:
-        """Forward to the underlying implementation's ``decide_batch``."""
+        """Forward to the underlying implementation's ``decide_batch``.
+
+        Transparently forwards to either
+        :meth:`AhlfeldtUtilityEngine.decide_batch` (softmax) or
+        :meth:`AhlfeldtABMEngine.decide_batch` (argmax) depending on
+        the configured mode.
+
+        Args:
+            *args: Positional arguments forwarded unchanged.
+            **kwargs: Keyword arguments forwarded unchanged.
+
+        Returns:
+            List of :class:`agent_urban_planning.LocationChoice`, one
+            per input agent and in the same order.
+
+        Examples:
+            >>> import agent_urban_planning as aup
+            >>> # engine = aup.UtilityEngine(params)
+            >>> # choices = engine.decide_batch(agents, env, zones, prices)
+        """
         return self._impl.decide_batch(*args, **kwargs)
 
     def __getattr__(self, name: str) -> Any:

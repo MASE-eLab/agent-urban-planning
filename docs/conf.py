@@ -117,6 +117,11 @@ copybutton_prompt_is_regexp = True
 
 # -- sphinx_codeautolink -------------------------------------------------
 codeautolink_autodoc_inject = True
+# Suppress "Could not match a code example to HTML" warnings raised when
+# docstring Examples sections use commented-out lines (because the actual
+# values like `params`, `agent`, `env` aren't bound in the doc-eval scope).
+# These are cosmetic warnings — docstring rendering still works.
+suppress_warnings = ["codeautolink.match_block", "codeautolink.match_name"]
 
 # -- sphinx_design -------------------------------------------------------
 # (no extra config needed)
