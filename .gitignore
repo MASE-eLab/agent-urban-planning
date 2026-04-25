@@ -37,6 +37,9 @@ docs/api/_autosummary/
 output/
 .cache/
 
+# V5 LLM cache (320 MB; hosted as GitHub release asset, not in git)
+data/berlin/llm_cache_v5/
+
 # Coverage
 .coverage
 htmlcov/

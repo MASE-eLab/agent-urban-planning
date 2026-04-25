@@ -17,8 +17,8 @@ recursive-include data/singapore *.yaml *.csv
 recursive-exclude data/berlin *.npz *.mat
 recursive-exclude data/shapefiles *.shp *.dbf *.shx *.prj *.cpg
 
-# EXCLUDE LLM caches and outputs
-recursive-exclude data/berlin/llm_cache_v5_4 *
+# EXCLUDE LLM caches and outputs (cache hosted on GitHub releases, not bundled)
+recursive-exclude data/berlin/llm_cache_v5 *
 prune output
 prune .cache
 prune .git

@@ -1,20 +1,49 @@
 """LLM client wrappers, async batching, and per-clearing cache.
 
-Five concrete clients ship with the package:
+Concrete clients ship with the package:
   * :class:`CodexCliClient` — wraps the local ``codex`` CLI subprocess.
   * :class:`ClaudeCodeClient` — wraps the local ``claude`` CLI subprocess.
   * :class:`ZaiCodingClient` — Anthropic-compatible Z.ai proxy.
-  * :class:`AnthropicClient` — direct Anthropic SDK.
-  * :class:`OpenAIClient` — direct OpenAI SDK.
+  * :class:`MultiProviderClient` — round-robin / failover composition.
+  * :class:`RetryingClient` — wraps any client with retry logic.
 
 Plus:
   * :class:`AsyncLLMClient` — bounded-concurrency wrapper around any client.
   * :class:`LLMCallCache` — per-clearing, price-bucketed cache.
-  * :class:`MultiProviderClient` — round-robin / failover composition.
+  * :class:`LLMPreferenceElicitor` — V4 pattern: LLM elicits per-agent
+    preference weights for the closed-form choice step.
+  * :class:`LLMEngine` — V4-style engine that delegates choice to an LLM
+    via prompt+response.
 
-All clients implement the abstract :class:`LLMClient` interface; users can
-subclass for custom providers.
-
-Phase 3 of the package extraction populates this subpackage; until then it is
-intentionally empty.
+All clients implement the :class:`LLMClient` Protocol; users can write
+custom providers by implementing ``.complete(user, system="") -> str``.
 """
+from __future__ import annotations
+
+from agent_urban_planning.llm.async_client import AsyncLLMClient
+from agent_urban_planning.llm.cache import LLMCallCache
+from agent_urban_planning.llm.clients import (
+    ClaudeCodeClient,
+    CodexCliClient,
+    LLMClient,
+    LLMCallFailedError,
+    LLMEngine,
+    LLMPreferenceElicitor,
+    MultiProviderClient,
+    RetryingClient,
+    ZaiCodingClient,
+)
+
+__all__ = [
+    "AsyncLLMClient",
+    "ClaudeCodeClient",
+    "CodexCliClient",
+    "LLMCallCache",
+    "LLMCallFailedError",
+    "LLMClient",
+    "LLMEngine",
+    "LLMPreferenceElicitor",
+    "MultiProviderClient",
+    "RetryingClient",
+    "ZaiCodingClient",
+]
