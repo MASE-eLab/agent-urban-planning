@@ -1,0 +1,22 @@
+{
+  "source": "synthetic-fallback (see DECISIONS.md D1; realistic Berlin 2011-era aggregates)",
+  "real_fetch_attempts": {
+    "amt_statistik_age": false,
+    "zensus_households": true,
+    "bezirk_income": false,
+    "bezirk_car_ownership": true,
+    "zensus_education": true,
+    "zensus_migration": true,
+    "afs_employment": false,
+    "zensus_gwz_tenure": true
+  },
+  "retrieved_at": "2026-04-23 20:01:02",
+  "ortsteile_count": 96,
+  "bezirke_count": 23,
+  "richer_attributes": [
+    "education",
+    "migration",
+    "employment",
+    "tenure"
+  ]
+}

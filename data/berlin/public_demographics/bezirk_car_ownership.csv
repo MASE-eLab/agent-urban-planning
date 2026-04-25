@@ -1,0 +1,27 @@
+# source: synthetic-fallback (see DECISIONS.md D1; realistic Berlin 2011-era aggregates)
+# Bezirk-level car ownership share.
+# retrieved_at: 2026-04-23 20:01:02
+bezirk_id,share_car_owner
+bzk_01,0.3
+bzk_02,0.28
+bzk_03,0.34
+bzk_04,0.46
+bzk_05,0.38
+bzk_06,0.44
+bzk_07,0.38
+bzk_08,0.4
+bzk_09,0.36
+bzk_10,0.32
+bzk_11,0.44
+bzk_12,0.48
+bzk_13,0.46
+bzk_14,0.3
+bzk_15,0.44
+bzk_16,0.38
+bzk_17,0.4
+bzk_18,0.44
+bzk_19,0.42
+bzk_20,0.38
+bzk_21,0.34
+bzk_22,0.38
+bzk_23,0.4

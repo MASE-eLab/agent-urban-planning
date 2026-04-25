@@ -1,0 +1,55 @@
+# Aggregation rules: per-field rules for reducing 12,309-block data to
+# coarser spatial units (Bezirke, Ortsteile). Referenced by
+# ``scripts/aggregate_berlin_blocks.py``.
+#
+# Extensive fields: sum across blocks in each aggregate unit.
+# Intensive fields: weighted mean, where the weight is specified.
+# Bilateral fields (travel-time matrix): flow-weighted bilateral average.
+#
+# See OpenSpec design Decision 11 for derivation.
+
+version: 1
+
+per_field_rules:
+  # ---- Extensive fields (sum) ----
+  area_06:     { rule: sum }
+  empwpl_06:   { rule: sum }
+  emprsd_06:   { rule: sum }
+  V_06:        { rule: sum }
+
+  # ---- Intensive fields (weighted means) ----
+  # Floor price: area-weighted mean preserves the revenue integral
+  #   Σ (Q_i · area_i) = Q_aggregate · area_aggregate
+  floor_06:    { rule: weighted_mean, weight: area_06 }
+
+  # Wage: employment-weighted mean preserves the wage bill
+  #   Σ (w_j · empwpl_j) = w_aggregate · empwpl_aggregate
+  wage_06:     { rule: weighted_mean, weight: empwpl_06 }
+
+  # Productivity fundamentals: employment-weighted geometric mean
+  # (Cobb-Douglas aggregates log-additively under CES-like conditions)
+  a_06:        { rule: weighted_geometric_mean, weight: empwpl_06 }
+  A_06:        { rule: weighted_geometric_mean, weight: empwpl_06 }
+  # Amenity fundamentals: residence-weighted geometric mean
+  b_06:        { rule: weighted_geometric_mean, weight: emprsd_06 }
+  B_06:        { rule: weighted_geometric_mean, weight: emprsd_06 }
+
+  # Output (endogenous, but informative if aggregated):
+  #   sum over blocks (Y is total output)
+  # theta, vv: not used in our ABM path — omit or pass through.
+
+travel_time:
+  # Off-diagonal: flow-weighted bilateral average
+  #   tt_IJ = Σ_{i∈I, j∈J} HR_i·HM_j·tt_ij / (Σ_{i∈I} HR_i · Σ_{j∈J} HM_j)
+  off_diagonal:
+    rule: flow_weighted
+    origin_weight: emprsd_06    # residence population at origin
+    destination_weight: empwpl_06  # workplace employment at destination
+  # Intra-unit (diagonal): either
+  #   (a) geometric proxy `sqrt(area_I / pi) / avg_speed`
+  #   (b) mean of intra-unit block-pair tt values (if non-empty)
+  # We default to (b) when the aggregate unit contains ≥2 blocks; otherwise
+  # fall back to (a).
+  intra_unit:
+    rule: intra_block_mean_then_geometric_fallback
+    avg_speed_km_per_min: 0.42  # ≈ 25 km/h, Ahlfeldt avg public transit pace

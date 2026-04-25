@@ -1,0 +1,97 @@
+synthetic_id,ortsteile_name,bezirk_name
+z96_000,Mitte,Mitte
+z96_001,Moabit,Mitte
+z96_002,Tiergarten,Mitte
+z96_003,Hansaviertel,Mitte
+z96_004,Friedrichshain,Friedrichshain-Kreuzberg
+z96_005,Kreuzberg,Friedrichshain-Kreuzberg
+z96_006,Prenzlauer Berg,Pankow
+z96_007,Pankow,Pankow
+z96_008,Weißensee,Pankow
+z96_009,Heinersdorf,Pankow
+z96_010,Blankenburg,Pankow
+z96_011,Karow,Pankow
+z96_012,Charlottenburg,Charlottenburg-Wilmersdorf
+z96_013,Wilmersdorf,Charlottenburg-Wilmersdorf
+z96_014,Spandau,Spandau
+z96_015,Steglitz,Steglitz-Zehlendorf
+z96_016,Lichterfelde,Steglitz-Zehlendorf
+z96_017,Lankwitz,Steglitz-Zehlendorf
+z96_018,Zehlendorf,Steglitz-Zehlendorf
+z96_019,Dahlem,Steglitz-Zehlendorf
+z96_020,Nikolassee,Steglitz-Zehlendorf
+z96_021,Schöneberg,Tempelhof-Schöneberg
+z96_022,Friedenau,Tempelhof-Schöneberg
+z96_023,Tempelhof,Tempelhof-Schöneberg
+z96_024,Mariendorf,Tempelhof-Schöneberg
+z96_025,Neukölln,Neukölln
+z96_026,Britz,Neukölln
+z96_027,Buckow,Neukölln
+z96_028,Rudow,Neukölln
+z96_029,Alt-Treptow,Treptow-Köpenick
+z96_030,Plänterwald,Treptow-Köpenick
+z96_031,Marzahn,Marzahn-Hellersdorf
+z96_032,Biesdorf,Marzahn-Hellersdorf
+z96_033,Kaulsdorf,Marzahn-Hellersdorf
+z96_034,Mahlsdorf,Marzahn-Hellersdorf
+z96_035,Hellersdorf,Marzahn-Hellersdorf
+z96_036,Marzahn 2,Marzahn-Hellersdorf
+z96_037,Marzahn 3,Marzahn-Hellersdorf
+z96_038,Friedrichsfelde,Lichtenberg
+z96_039,Karlshorst,Lichtenberg
+z96_040,Lichtenberg,Lichtenberg
+z96_041,Falkenberg,Lichtenberg
+z96_042,Reinickendorf,Reinickendorf
+z96_043,Tegel,Reinickendorf
+z96_044,Alt-Mitte,Mitte-Ost
+z96_045,Rosenthaler Platz,Mitte-Ost
+z96_046,Torstraße,Mitte-Ost
+z96_047,Oranienburger Tor,Mitte-Ost
+z96_048,Alt-Mitte 2,Mitte-Ost
+z96_049,Alt-Mitte 3,Mitte-Ost
+z96_050,Alt-Mitte 4,Mitte-Ost
+z96_051,Alt-Mitte 5,Mitte-Ost
+z96_052,Alt-Mitte 6,Mitte-Ost
+z96_053,Südkreuz,Kreuzberg-Süd
+z96_054,Hasenheide,Kreuzberg-Süd
+z96_055,Landwehrkanal,Kreuzberg-Süd
+z96_056,Pankow-Nord,Pankow-Nord
+z96_057,Weißensee-Nord,Pankow-Nord
+z96_058,Buch-Nord,Pankow-Nord
+z96_059,Französisch Buchholz-Nord,Pankow-Nord
+z96_060,Pankow-Nord 2,Pankow-Nord
+z96_061,Pankow-Nord 3,Pankow-Nord
+z96_062,Pankow-Nord 4,Pankow-Nord
+z96_063,Charlottenburg-Nord,Charlottenburg-Nord
+z96_064,Siemenssiedlung,Charlottenburg-Nord
+z96_065,Charlottenburg-Nord 2,Charlottenburg-Nord
+z96_066,Charlottenburg-Nord 3,Charlottenburg-Nord
+z96_067,Charlottenburg-Nord 4,Charlottenburg-Nord
+z96_068,Charlottenburg-Nord 5,Charlottenburg-Nord
+z96_069,Spandau-Süd,Spandau-Süd
+z96_070,Gatow-Süd,Spandau-Süd
+z96_071,Spandau-Süd 2,Spandau-Süd
+z96_072,Spandau-Süd 3,Spandau-Süd
+z96_073,Spandau-Süd 4,Spandau-Süd
+z96_074,Spandau-Süd 5,Spandau-Süd
+z96_075,Zehlendorf-West,Zehlendorf-West
+z96_076,Schöneberg-Ost,Schöneberg-Ost
+z96_077,Friedenau-Ost,Schöneberg-Ost
+z96_078,Tempelhof-Ost,Schöneberg-Ost
+z96_079,Marienfelde-Ost,Schöneberg-Ost
+z96_080,Schöneberg-Ost 2,Schöneberg-Ost
+z96_081,Neukölln-Süd,Neukölln-Süd
+z96_082,Rudow-Süd,Neukölln-Süd
+z96_083,Köpenick-Ost,Köpenick-Ost
+z96_084,Friedrichshagen-Ost,Köpenick-Ost
+z96_085,Rahnsdorf-Ost,Köpenick-Ost
+z96_086,Köpenick-Ost 2,Köpenick-Ost
+z96_087,Hellersdorf-Nord,Hellersdorf-Nord
+z96_088,Mahlsdorf-Nord,Hellersdorf-Nord
+z96_089,Hellersdorf-Nord 2,Hellersdorf-Nord
+z96_090,Hellersdorf-Nord 3,Hellersdorf-Nord
+z96_091,Reinickendorf-Nord,Reinickendorf-Nord
+z96_092,Tegel-Nord,Reinickendorf-Nord
+z96_093,Hermsdorf-Nord,Reinickendorf-Nord
+z96_094,Reinickendorf-Nord 2,Reinickendorf-Nord
+z96_095,Reinickendorf-Nord 3,Reinickendorf-Nord
