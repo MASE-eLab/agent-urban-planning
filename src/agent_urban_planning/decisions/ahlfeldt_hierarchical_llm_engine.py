@@ -66,7 +66,7 @@ logger = logging.getLogger(__name__)
 class AhlfeldtHierarchicalLLMEngine(AhlfeldtABMEngine):
     """LLM-as-decision-maker engine with clustering and two-stage prompts.
 
-    The full V5 / V5.4 engine. Replaces ``V[i, j]`` entirely with an
+    The full V5 / V5 engine. Replaces ``V[i, j]`` entirely with an
     LLM call made per cluster per market iteration. Stage 1 selects a
     residence; stage 2 selects a workplace conditional on residence.
     Returned scores become sampling probabilities (via
@@ -100,7 +100,7 @@ class AhlfeldtHierarchicalLLMEngine(AhlfeldtABMEngine):
         response_validator_stage1: Optional override for the stage-1
             response validator.
         stage2_top_k_residences: Optional cap on stage-2 fan-out (used
-            in V5.4 score-all mode).
+            in V5 score-all mode).
         **parent_kwargs: Forwarded to :class:`AhlfeldtABMEngine`.
 
     Examples:
@@ -149,7 +149,7 @@ class AhlfeldtHierarchicalLLMEngine(AhlfeldtABMEngine):
         self.llm_concurrency = int(llm_concurrency)
         self.progress_callback = progress_callback
         # Stage-1 prompt builder + validator. Default to production V5 top-5.
-        # Pass different values for V5.4 score-all-96 ablation. Stage-2
+        # Pass different values for V5 score-all-96 ablation. Stage-2
         # always uses top-5 (see design §D6 in v5-score-all-96-ablation).
         self.prompt_builder_stage1: Stage1Builder = (
             prompt_builder_stage1 if prompt_builder_stage1 is not None
@@ -159,7 +159,7 @@ class AhlfeldtHierarchicalLLMEngine(AhlfeldtABMEngine):
             response_validator_stage1 if response_validator_stage1 is not None
             else validate_top5_response
         )
-        # V5.4 cost-control knob. `None` = use every residence in the stage-1
+        # V5 cost-control knob. `None` = use every residence in the stage-1
         # distribution (preserves V5.0 behaviour, where stage-1 top-5 → 5
         # stage-2 calls/cluster). Set to an int K to cap stage-2 fan-out at
         # the top-K residences (by stage-1 probability) per cluster — used
@@ -338,7 +338,7 @@ class AhlfeldtHierarchicalLLMEngine(AhlfeldtABMEngine):
 
         `validator` defaults to `validate_top5_response` for backward compat
         with existing callers. Pass a different validator (e.g.,
-        `validate_all_scores_response`) for V5.4 score-all mode.
+        `validate_all_scores_response`) for V5 score-all mode.
         """
         if validator is None:
             validator = validate_top5_response
@@ -379,7 +379,7 @@ class AhlfeldtHierarchicalLLMEngine(AhlfeldtABMEngine):
 
         prompts: list of (system, user) tuples.
         validator: defaults to `validate_top5_response`. Pass a different
-          validator (e.g., `validate_all_scores_response`) for V5.4 score-all
+          validator (e.g., `validate_all_scores_response`) for V5 score-all
           mode. Stage-2 calls always pass the default.
         Returns: list of parsed results, same order as input.
         """
@@ -593,7 +593,7 @@ class AhlfeldtHierarchicalLLMEngine(AhlfeldtABMEngine):
         needed_pairs: list[tuple[int, str]] = []
         for c, dist in stage1_synth_dist.items():
             # Optional cap: only query stage-2 for the top-K residences.
-            # Used by the V5.4 score-all-96 variant to prevent stage-2 fan-out
+            # Used by the V5 score-all-96 variant to prevent stage-2 fan-out
             # from exploding from 5→96 residences per cluster. Residences
             # outside top-K fall back to uniform workplace in the sampler.
             if self.stage2_top_k_residences is not None:

@@ -1,4 +1,4 @@
-"""Shared helpers for the Berlin V1-V5.4 replication scripts.
+"""Shared helpers for the Berlin V1-V5 replication scripts.
 
 Loads the bundled Berlin scenario + agents, applies the East-West
 Express τ shock, and writes per_zone.csv outputs in the format consumed
@@ -37,7 +37,7 @@ def check_berlin_data_present() -> None:
             missing.append(str(p))
     if missing:
         msg = (
-            "Bundled Berlin data missing. The Berlin V1-V5.4 replication "
+            "Bundled Berlin data missing. The Berlin V1-V5 replication "
             "requires the bundled NPZ + YAML files which ship in the git "
             "repo but NOT in the PyPI sdist. Either:\n"
             "  1. git clone the repo (gives you the data), OR\n"

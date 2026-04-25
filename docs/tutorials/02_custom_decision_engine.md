@@ -2,7 +2,7 @@
 
 Write your own decision engine by subclassing
 {class}`agent_urban_planning.DecisionEngine`. Useful for research extensions
-that don't fit the V1-V5.4 templates.
+that don't fit the V1-V5 templates.
 
 ## The protocol
 
@@ -68,5 +68,5 @@ results = sim.run()
 
 ## Next steps
 
-- {doc}`03_full_llm_v5` — the V5.4 LLM-ABM pattern in depth.
+- {doc}`03_full_llm_v5` — the V5 LLM-ABM pattern in depth.
 - {doc}`04_berlin_replication` — reproduce the paper's results.

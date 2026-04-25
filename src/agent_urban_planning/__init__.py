@@ -14,7 +14,7 @@ Quickstart::
     results = sim.run(policy=None)
 
 See the documentation at https://agent-urban-planning.readthedocs.io for full API
-reference, tutorials, and reproducibility instructions for the paper's V1-V5.4
+reference, tutorials, and reproducibility instructions for the paper's V1-V5
 results.
 """
 from __future__ import annotations
@@ -45,7 +45,7 @@ from agent_urban_planning.decisions.hybrid import HybridDecisionEngine
 from agent_urban_planning.decisions.llm import LLMDecisionEngine
 
 # Underlying paper-internal classes (advanced users only — the public
-# API above is the recommended entry point for V1/V2/V3/V4-B/V5.4).
+# API above is the recommended entry point for V1/V2/V3/V4/V5).
 from agent_urban_planning.decisions.ahlfeldt_utility import AhlfeldtUtilityEngine
 from agent_urban_planning.decisions.ahlfeldt_abm_engine import AhlfeldtABMEngine
 from agent_urban_planning.decisions.ahlfeldt_argmax_hybrid_engine import (

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Berlin V4-B — Hybrid-ABM (LLM-elicited preferences + closed-form choice).
+"""Berlin V4 — Hybrid-ABM (LLM-elicited preferences + closed-form choice).
 
-The V4-B pattern: an LLM elicits per-agent preference weights (β, κ);
+The V4 pattern: an LLM elicits per-agent preference weights (β, κ);
 mixed-logit then computes discrete zone choice deterministically.
 
 Requires an LLM provider (codex-cli recommended; ~$5 in API credits).
@@ -21,13 +21,13 @@ from _common import (
 
 
 def _build_elicitor(provider: str):
-    """Build an LLM-based preference elicitor for the V4-B pattern.
+    """Build an LLM-based preference elicitor for the V4 pattern.
 
     NOTE: The full elicitor wiring (LLM client → caching → per-type β/κ
     extraction) lives in the dev repo's ``simulator.decisions.elicitation``
     module. The public library exposes ``aup.HybridDecisionEngine(elicitor=...)``
     but does NOT yet provide a high-level "build elicitor from llm_client"
-    helper. For end-to-end V4-B reproduction, see:
+    helper. For end-to-end V4 reproduction, see:
 
         multi_agent_simulator/scripts/run_berlin_v4_b_shock_argmax_hybrid.py
 
@@ -35,7 +35,7 @@ def _build_elicitor(provider: str):
     in Phase 4 of the extract-library-agent-urban-planning change.
     """
     raise NotImplementedError(
-        "V4-B elicitor builder not yet exposed in the public library. "
+        "V4 elicitor builder not yet exposed in the public library. "
         "See examples/03_berlin_replication/README.md for the dev-repo "
         "fallback path."
     )
@@ -58,7 +58,7 @@ def main() -> int:
         seed=42,
     )
     print(f"Engine: {engine!r}")
-    run_baseline_and_shock(engine, output_subdir="berlin_v4b_hybrid")
+    run_baseline_and_shock(engine, output_subdir="berlin_v4_hybrid")
     return 0
 
 

@@ -39,7 +39,7 @@ Decision engines (public API)
 -----------------------------
 
 The three first-class decision-engine classes — configurable via
-constructor kwargs to reproduce V1-V5.4 from the paper:
+constructor kwargs to reproduce V1-V5 from the paper:
 
 .. autosummary::
    :toctree: _autosummary

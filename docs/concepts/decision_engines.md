@@ -11,8 +11,8 @@ differences.
 | V1 | Baseline-softmax | Closed-form softmax over Cobb-Douglas + Fréchet utility | `aup.UtilityEngine(mode="softmax")` |
 | V2 | Baseline-ABM argmax | ABM, argmax, Fréchet idiosyncratic shocks | `aup.UtilityEngine(mode="argmax", noise="frechet")` |
 | V3 | Normal-ABM argmax | ABM, argmax, Gaussian shocks | `aup.UtilityEngine(mode="argmax", noise="normal")` |
-| V4-B | Hybrid-ABM | LLM elicits per-agent (β, κ); closed-form choice | `aup.HybridDecisionEngine(elicitor=...)` |
-| V5.4 | LLM-ABM (paper headline) | Full LLM as decision maker; score-all-96 | `aup.LLMDecisionEngine(response_format="score_all", rebalance_instruction=True, stage2_top_k_residences=10)` |
+| V4 | Hybrid-ABM | LLM elicits per-agent (β, κ); closed-form choice | `aup.HybridDecisionEngine(elicitor=...)` |
+| V5 | LLM-ABM (paper headline) | Full LLM as decision maker; score-all-96 | `aup.LLMDecisionEngine(response_format="score_all", rebalance_instruction=True, stage2_top_k_residences=10)` |
 
 ## Conceptual layers
 
@@ -24,11 +24,11 @@ flowchart LR
         v3[V3 argmax + Normal]
     end
     subgraph V4B ["HybridDecisionEngine"]
-        v4b[V4-B Hybrid]
+        v4[V4 Hybrid]
     end
     subgraph V54 ["LLMDecisionEngine"]
         v50[V5.0 top-5]
-        v54[V5.4 score-all-96]
+        v54[V5 score-all-96]
     end
 ```
 
@@ -50,18 +50,18 @@ constructor kwargs.
   - V2 / V3
   - Captures Fréchet (V2) or Gaussian (V3) idiosyncratic noise
 * - LLM brings contextual reasoning, but funct. form is fine
-  - V4-B (Hybrid-ABM)
+  - V4 (Hybrid-ABM)
   - LLM elicits parameters once per cluster; cheap, interpretable
 * - Research question: "what if agents reason like an LLM?"
-  - V5.4 (LLM-ABM)
+  - V5 (LLM-ABM)
   - Full LLM-as-decision-maker; captures cultural/identity/agglomeration
     mechanisms structural models forbid
 * - Reproduce paper's main results
-  - V1, V2, V3, V4-B, V5.4 all needed
+  - V1, V2, V3, V4, V5 all needed
   - Cross-version comparison is the paper's central artifact
 ```
 
-## V5.4 — paper headline
+## V5 — paper headline
 
 The score-all-96 + rebalance + stage-2 cap configuration:
 
@@ -99,4 +99,4 @@ See {doc}`/tutorials/02_custom_decision_engine` for the full pattern.
 
 - {doc}`/api/index` — full API reference
 - {doc}`llm_integration` — LLM provider configuration
-- {doc}`/tutorials/03_full_llm_v5` — V5.0/V5.4 deep dive
+- {doc}`/tutorials/03_full_llm_v5` — V5.0/V5 deep dive

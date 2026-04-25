@@ -38,7 +38,7 @@ V5.3 ablation variants (opt-in, NOT default V5 production):
     the production v2 prompt. Default V5 production uses `build_stage1_prompt`
     / `build_stage2_prompt` above — those functions are unchanged.
 
-V5.4 ablation variant (opt-in, NOT default V5 production):
+V5 ablation variant (opt-in, NOT default V5 production):
   * build_stage1_prompt_score_all — instructs the LLM to emit a score for
     EVERY zone instead of a top-5 ranking. Directly targets the V5.3-
     diagnosed top-5 discretization bottleneck (91/96 zones invisible to
@@ -374,7 +374,7 @@ def build_stage1_prompt_score_all(
     *,
     prompt_version: str = PROMPT_VERSION_V4_SCORE_ALL,
 ) -> tuple[str, str]:
-    """V5.4 stage-1 prompt: score ALL zones (no top-5 truncation).
+    """V5 stage-1 prompt: score ALL zones (no top-5 truncation).
 
     Sibling of `build_stage1_prompt`. The existing function is unchanged.
 

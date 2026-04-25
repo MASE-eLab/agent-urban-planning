@@ -1,6 +1,6 @@
-# Berlin V1-V5.4 replication
+# Berlin V1-V5 replication
 
-Reproduces the paper's 5 model variants (V1, V2, V3, V4-B, V5.4) on the
+Reproduces the paper's 5 model variants (V1, V2, V3, V4, V5) on the
 synthetic 96-zone Berlin scenario, baseline + East-West Express shock.
 
 ## Prerequisites
@@ -9,13 +9,13 @@ synthetic 96-zone Berlin scenario, baseline + East-West Express shock.
 pip install -e ".[llm,plot,berlin]"
 ```
 
-Plus (for V5.4 LLM-ABM only): an LLM provider available locally:
-- `codex-cli` — OAuth-managed `codex` CLI (preferred for V5.4 reproduction)
+Plus (for V5 LLM-ABM only): an LLM provider available locally:
+- `codex-cli` — OAuth-managed `codex` CLI (preferred for V5 reproduction)
 - `claude-code` — `claude` CLI
 - or set `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` for direct SDK access
 
 The bundled Berlin Ortsteile NPZ files at `data/berlin/ortsteile/` are
-required for all V1-V5.4 runs. They ship in the git repo (see
+required for all V1-V5 runs. They ship in the git repo (see
 `data/README.md` for size + license attribution) but NOT in the PyPI sdist.
 Reproducing these results requires `git clone` rather than `pip install`.
 
@@ -26,11 +26,11 @@ Reproducing these results requires `git clone` rather than `pip install`.
 | Tier 3a | V1 (Baseline-softmax) | ~3 hr | No |
 | Tier 3b | V2 (Baseline-ABM argmax) | ~3 hr | No |
 | Tier 3c | V3 (Normal-ABM argmax) | ~3 hr | No |
-| Tier 3d | V4-B (Hybrid-ABM) | ~3 hr | Yes (modest, ~$5) |
-| Tier 4 | V5.4 (LLM-ABM, paper headline) | ~10 hr | Yes (significant, ~$30-50) |
+| Tier 3d | V4 (Hybrid-ABM) | ~3 hr | Yes (modest, ~$5) |
+| Tier 4 | V5 (LLM-ABM, paper headline) | ~10 hr | Yes (significant, ~$30-50) |
 
-A `--no-llm` mode on `run_v5_4_score_all.py` replays the bundled cached
-LLM responses at `data/berlin/llm_cache_v5_4/` so Tier 4 can be reproduced
+A `--no-llm` mode on `run_v5_score_all.py` replays the bundled cached
+LLM responses at `data/berlin/llm_cache_v5/` so Tier 4 can be reproduced
 without any LLM credits — just bundled data.
 
 ## Scripts
@@ -38,8 +38,8 @@ without any LLM credits — just bundled data.
 - `run_v1_softmax.py` — V1 baseline + East-West shock
 - `run_v2_argmax_frechet.py` — V2 baseline + shock
 - `run_v3_argmax_normal.py` — V3 baseline + shock
-- `run_v4b_hybrid.py` — V4-B baseline + shock
-- `run_v5_4_score_all.py` — V5.4 baseline + shock (paper headline)
+- `run_v4_hybrid.py` — V4 baseline + shock
+- `run_v5_score_all.py` — V5 baseline + shock (paper headline)
 
 All scripts share the same structure:
 1. Load the Berlin scenario YAML (`data/berlin/scenarios/berlin_2006_ortsteile.yaml`).
@@ -61,15 +61,15 @@ This produces:
 - `output/comparison/comparison_moments.csv` — cross-version moments
 - `output/comparison/berlin_q_observed_and_log_change.png` — choropleth
 - `output/comparison/berlin_w_observed_and_log_change.png` — choropleth
-- `output/comparison/llm_abm_satisfaction.csv` — V5.4 self-rating sidebar
+- `output/comparison/llm_abm_satisfaction.csv` — V5 self-rating sidebar
 
 ## Notes on numerical reproducibility
 
 These scripts are seeded at 42 by default. Numerical reproducibility is
-deterministic for V1, V2, V3 (no LLM noise). V4-B and V5.4 reproducibility
+deterministic for V1, V2, V3 (no LLM noise). V4 and V5 reproducibility
 relies on:
 - Same LLM provider (`codex-cli` recommended)
-- Same prompt cache (bundled at `data/berlin/llm_cache_v5_4/`)
+- Same prompt cache (bundled at `data/berlin/llm_cache_v5/`)
 - Same seed
 
 Cross-version equivalence with the dev repo's outputs is documented to

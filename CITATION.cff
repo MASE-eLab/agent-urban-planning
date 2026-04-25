@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: "If you use this software in your research, please cite the paper below."
 type: software
 title: "agent-urban-planning"
-abstract: "An open-source Python library for agent-based urban planning simulation with closed-form, hybrid, and full-LLM decision engines. Reproduces the Berlin V1-V5.4 results from the accompanying NeurIPS Datasets & Benchmarks paper."
+abstract: "An open-source Python library for agent-based urban planning simulation with closed-form, hybrid, and full-LLM decision engines. Reproduces the Berlin V1-V5 results from the accompanying NeurIPS Datasets & Benchmarks paper."
 authors:
   - family-names: "TBD"
     given-names: "TBD"

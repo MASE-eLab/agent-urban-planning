@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Berlin V5.4 — LLM-ABM (score-all-96 + rebalance + stage-2 cap).
+"""Berlin V5 — LLM-ABM (score-all-96 + rebalance + stage-2 cap).
 
 The paper's headline contribution. Configures ``LLMDecisionEngine``
 to use the score-all-96 stage-1 prompt with the V5.3-validated rebalance
@@ -8,11 +8,11 @@ instruction and the stage-2 top-K residence cap.
 Two run modes:
 
   ``--no-llm`` (default): replays the bundled cached LLM responses at
-  ``data/berlin/llm_cache_v5_4/``. ~5 min wall-clock, no LLM credits
+  ``data/berlin/llm_cache_v5/``. ~5 min wall-clock, no LLM credits
   required. Tier-4 reproducibility for reviewers without LLM access.
 
   Without ``--no-llm``: makes live LLM calls via the configured provider.
-  ~10 hr wall-clock, ~$30-50 in codex-cli credits. Reproduces V5.4
+  ~10 hr wall-clock, ~$30-50 in codex-cli credits. Reproduces V5
   baseline + shock from scratch.
 
 Configuration::
@@ -41,7 +41,7 @@ from _common import (
 
 
 def _build_llm_client(provider: str, no_llm: bool, cache_dir):
-    """Construct the LLM client for the V5.4 run.
+    """Construct the LLM client for the V5 run.
 
     When ``no_llm=True``, returns a CacheReplayClient that only reads from
     the bundled cache without ever issuing a live call. Useful for
@@ -54,7 +54,7 @@ def _build_llm_client(provider: str, no_llm: bool, cache_dir):
             f"--no-llm cache replay requires the CacheReplayClient "
             f"helper in aup.llm.cache, not yet exposed in the public "
             f"library API. Cache lives at {cache_dir}. The dev repo's "
-            f"V5.4 baseline run already populated this cache; see the "
+            f"V5 baseline run already populated this cache; see the "
             f"dev repo's run_berlin_v5_hierarchical.py for replay logic."
         )
     if provider == "codex-cli":
@@ -79,14 +79,14 @@ def main() -> int:
     check_berlin_data_present()
     sc = load_scenario(BERLIN_SCENARIO_YAML)
 
-    cache_dir = BERLIN_DATA_DIR / "llm_cache_v5_4"
+    cache_dir = BERLIN_DATA_DIR / "llm_cache_v5"
     llm_client = _build_llm_client(args.llm_provider, args.no_llm, cache_dir)
 
-    # V5.4 configuration — paper's headline.
+    # V5 configuration — paper's headline.
     engine = aup.LLMDecisionEngine(
         sc.ahlfeldt_params,
         llm_client=llm_client,
-        response_format="score_all",       # V5.4 — score every zone
+        response_format="score_all",       # V5 — score every zone
         rebalance_instruction=True,        # V5.3-validated affordability instruction
         stage2_top_k_residences=10,        # cost cap on stage-2 fan-out
         cluster_k=50,
@@ -97,7 +97,7 @@ def main() -> int:
     print(f"Engine: {engine!r}")
     run_baseline_and_shock(
         engine,
-        output_subdir="berlin_v5_4_score_all",
+        output_subdir="berlin_v5_score_all",
         iters=args.iters,
         seed=args.seed,
     )

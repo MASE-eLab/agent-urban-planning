@@ -40,9 +40,9 @@ python scripts/import_berlin_memory_pack.py
 This reads the upstream `.h5` / `.mat` files and writes block-level
 NPZs to `data/berlin/blocks/`.
 
-### V5.4 LLM cache (`berlin/llm_cache_v5_4/`)
+### V5 LLM cache (`berlin/llm_cache_v5/`)
 
-The bundled cache from the paper's V5.4 score-all-96 baseline + shock
+The bundled cache from the paper's V5 score-all-96 baseline + shock
 runs is **~320 MB** — too large for git. Two options:
 
 1. **Live LLM run**: configure a provider (`codex-cli` recommended)
@@ -93,5 +93,5 @@ The block-to-Bezirk and block-to-Ortsteil crosswalks are built from:
 ## Reproducibility
 
 For full reproducibility instructions, see
-[`docs/reproducibility/berlin_v1_v5_4.md`](../docs/reproducibility/berlin_v1_v5_4.md)
+[`docs/reproducibility/berlin_v1_v5.md`](../docs/reproducibility/berlin_v1_v5.md)
 and the example scripts at `examples/03_berlin_replication/`.

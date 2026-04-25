@@ -1,9 +1,9 @@
-# Full LLM hierarchical engine (V5.0 / V5.4)
+# Full LLM hierarchical engine (V5.0 / V5)
 
 The {class}`agent_urban_planning.LLMDecisionEngine` is the library's
 **headline contribution**: a full LLM-as-decision-maker hierarchical engine
 that queries an LLM per agent cluster per market iteration to make discrete
-location decisions directly. The paper's V5.0 (top-5 ranking) and V5.4
+location decisions directly. The paper's V5.0 (top-5 ranking) and V5
 (score-all-96) variants are both reproducible via constructor kwargs.
 
 ## The hierarchical pattern
@@ -51,7 +51,7 @@ engine = aup.LLMDecisionEngine(
 )
 ```
 
-## V5.4 reproduction (score-all-96, paper headline)
+## V5 reproduction (score-all-96, paper headline)
 
 ```python
 engine = aup.LLMDecisionEngine(
@@ -68,7 +68,7 @@ engine = aup.LLMDecisionEngine(
 
 The 4 kwargs that differ from V5.0:
 
-| kwarg | V5.0 | V5.4 (paper) | What it does |
+| kwarg | V5.0 | V5 (paper) | What it does |
 |---|---|---|---|
 | `response_format` | `"top5"` | `"score_all"` | Ask LLM for 5 best zones vs scoring every zone |
 | `rebalance_instruction` | `False` | `True` | Add "weight affordability ≥ amenity" sentence |
@@ -83,9 +83,9 @@ shocks can only re-rank within the top-5; the other zones contribute zero
 to the demand-curve signal at all. The market literally can't price
 zones the LLM ignores.
 
-The V5.4 `score_all` format asks the LLM to score every zone, giving each
+The V5 `score_all` format asks the LLM to score every zone, giving each
 a non-trivial probability mass. This makes the demand curve fully
-populated and the tâtonnement converges. See the paper's §5 (V5.4
+populated and the tâtonnement converges. See the paper's §5 (V5
 ablation) for the empirical evidence.
 
 ## Why the stage-2 cap?
@@ -119,5 +119,5 @@ engine = aup.LLMDecisionEngine(
 
 ## Next steps
 
-- {doc}`04_berlin_replication` — reproduce the paper's V5.4 baseline + shock.
+- {doc}`04_berlin_replication` — reproduce the paper's V5 baseline + shock.
 - {doc}`/api/index` — full API reference for `LLMDecisionEngine`.

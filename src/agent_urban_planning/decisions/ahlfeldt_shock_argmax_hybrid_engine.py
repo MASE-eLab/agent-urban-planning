@@ -1,6 +1,6 @@
-"""V4-B shock-argmax-hybrid engine: mixed-logit / random-coefficients logit.
+"""V4 shock-argmax-hybrid engine: mixed-logit / random-coefficients logit.
 
-V4-B = V2 (AhlfeldtABMEngine, argmax + Gumbel shock) with per-type
+V4 = V2 (AhlfeldtABMEngine, argmax + Gumbel shock) with per-type
 (beta_k, kappa_k) scaling factors from LLM-elicited preferences replacing
 V2's homogeneous (beta, kappa).
 
@@ -9,7 +9,7 @@ For each demographic type k:
 Per agent, draw a (N, N) Gumbel shock; argmax over V_k[i, j] + shock / epsilon.
 Aggregate empirical counts feed AhlfeldtMarket unchanged.
 
-Setting all (beta_k, kappa_k) == (beta, kappa) collapses V4-B to V2 bit-for-bit
+Setting all (beta_k, kappa_k) == (beta, kappa) collapses V4 to V2 bit-for-bit
 (same RNG, same shock sequence). This is the uniform-collapse invariant.
 
 Cache namespace: reuses V4-A's `.cache/llm_preferences_berlin_v4/` by default.
@@ -279,7 +279,7 @@ class AhlfeldtShockArgmaxHybridEngine(AhlfeldtABMEngine):
         M = self.num_agents
         if self._agent_type_idx is None:
             raise RuntimeError("agent_type_idx not built; ensure_elicitation missing")
-        # For V4-B we expand the K-type catalog to M MC replicates. When the
+        # For V4 we expand the K-type catalog to M MC replicates. When the
         # agent list already has length M (e.g., 1M explicit agents), use the
         # agent_type_idx directly. When it has length < M (e.g., K-type
         # catalog + MC expansion), we tile weighted by agent.weight.
@@ -382,13 +382,13 @@ class AhlfeldtShockArgmaxHybridEngine(AhlfeldtABMEngine):
         if self.last_abm_diagnostics["n_residence_marginal_zero"] > 0:
             empty_res = [zones[i] for i in range(N) if HR_count[i] == 0][:5]
             logger.warning(
-                "V4-B: %d Ortsteile have zero residence marginal; first few: %s",
+                "V4: %d Ortsteile have zero residence marginal; first few: %s",
                 self.last_abm_diagnostics["n_residence_marginal_zero"], empty_res,
             )
         if self.last_abm_diagnostics["n_workplace_marginal_zero"] > 0:
             empty_wp = [zones[j] for j in range(N) if HM_count[j] == 0][:5]
             logger.warning(
-                "V4-B: %d Ortsteile have zero workplace marginal; first few: %s",
+                "V4: %d Ortsteile have zero workplace marginal; first few: %s",
                 self.last_abm_diagnostics["n_workplace_marginal_zero"], empty_wp,
             )
 
@@ -412,7 +412,7 @@ class AhlfeldtShockArgmaxHybridEngine(AhlfeldtABMEngine):
             "expected_utility": utilities_mean,
             "n_agents": M,
             "n_zones": N,
-            "sampling_path": "v4b-shock-argmax-hybrid",
+            "sampling_path": "v4-shock-argmax-hybrid",
             "B_mean": float(np.mean(B)),
             "B_std": float(np.std(B)),
         }

@@ -101,9 +101,9 @@ class UtilityEngine:
         usable on a ``UtilityEngine`` instance.
 
     See Also:
-        :class:`agent_urban_planning.HybridDecisionEngine` — V4-B (LLM
+        :class:`agent_urban_planning.HybridDecisionEngine` — V4 (LLM
         elicits per-agent preference weights, then closed-form choice).
-        :class:`agent_urban_planning.LLMDecisionEngine` — V5.0 / V5.4
+        :class:`agent_urban_planning.LLMDecisionEngine` — V5.0 / V5
         (full LLM-as-decision-maker hierarchical engine).
 
     References:

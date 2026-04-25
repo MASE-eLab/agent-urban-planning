@@ -58,8 +58,8 @@ After applying the shock, the tool reports:
 Only ~1.8% of pairs are affected — a focused, station-local intervention
 rather than a city-wide commute overhaul. This focal nature is why
 spatial patterns of ΔQ, Δw, ΔHR, ΔHM differ qualitatively across
-V1-V5.4: the structural family captures localized accessibility
-capitalization at the 4 stations, while V5.4 picks up city-wide
+V1-V5: the structural family captures localized accessibility
+capitalization at the 4 stations, while V5 picks up city-wide
 gradient flattening + agglomeration mechanisms.
 
 ## Comparing variants' shock responses
@@ -72,11 +72,11 @@ Cross-variant moments table (built by
 V1 Baseline-softmax    +0.0004  +0.0070   +0.0007    -0.0032
 V2 Baseline-ABM argmax +0.0004  +0.0071   -0.0000    -0.0031
 V3 Normal-ABM argmax   +0.0004  +0.0042   +0.0132    -0.0027
-V4-B Hybrid-ABM        +0.0004  +0.0068   +0.0002    -0.0031
-V5.4 LLM-ABM           +0.0016  +0.0083   +0.0299    -0.0056
+V4 Hybrid-ABM        +0.0004  +0.0068   +0.0002    -0.0031
+V5 LLM-ABM           +0.0016  +0.0083   +0.0299    -0.0056
 ```
 
-The structural family clusters tightly (consensus); V5.4 stands out on:
+The structural family clusters tightly (consensus); V5 stands out on:
 - 4× larger μ ΔQ
 - 1.2× larger σ ΔQ (more spread)
 - 14× larger Δ Q̄ (mean rent rise)
@@ -98,6 +98,6 @@ companion suitable for paste into the paper.
 
 ## See also
 
-- {doc}`berlin_v1_v5_4` — full reproducibility tier ladder
-- {doc}`/concepts/decision_engines` — the V1-V5.4 conceptual differences
+- {doc}`berlin_v1_v5` — full reproducibility tier ladder
+- {doc}`/concepts/decision_engines` — the V1-V5 conceptual differences
 - {doc}`/tutorials/04_berlin_replication` — task-oriented walkthrough

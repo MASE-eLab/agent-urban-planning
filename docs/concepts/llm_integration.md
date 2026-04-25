@@ -1,14 +1,14 @@
 # LLM integration
 
 The library ships with multiple LLM client wrappers behind a common
-abstraction so V4-B and V5.4 engines can swap providers without code
+abstraction so V4 and V5 engines can swap providers without code
 changes.
 
 ## Available clients
 
 | Client | Auth | Notes |
 |---|---|---|
-| `aup.llm.CodexCliClient` | OAuth (handled by `codex` CLI) | **Recommended for V5.4 reproduction**. No API key. Sweet spot at concurrency=15 (~6 calls/sec). |
+| `aup.llm.CodexCliClient` | OAuth (handled by `codex` CLI) | **Recommended for V5 reproduction**. No API key. Sweet spot at concurrency=15 (~6 calls/sec). |
 | `aup.llm.ClaudeCodeClient` | OAuth (handled by `claude` CLI) | No API key. Sweet spot at concurrency=20. Default model: haiku. |
 | `aup.llm.AnthropicClient` | `ANTHROPIC_API_KEY` env var | Direct Anthropic SDK. |
 | `aup.llm.OpenAIClient` | `OPENAI_API_KEY` env var | Direct OpenAI SDK. |
@@ -19,7 +19,7 @@ changes.
 ```python
 import agent_urban_planning as aup
 
-# codex-cli (preferred for V5.4 paper reproduction)
+# codex-cli (preferred for V5 paper reproduction)
 client = aup.llm.CodexCliClient()
 
 # claude-code
@@ -34,7 +34,7 @@ engine = aup.LLMDecisionEngine(params, llm_client=client)
 
 ## Async + caching
 
-V5.4 issues 50 cluster × 50 iter × 11 calls/iter ≈ 27,500 LLM calls per
+V5 issues 50 cluster × 50 iter × 11 calls/iter ≈ 27,500 LLM calls per
 baseline run. Concurrency + caching are essential:
 
 ```python
@@ -74,7 +74,7 @@ works.
 
 ## Multi-provider failover
 
-For long V5.4 runs, the {class}`MultiProviderClient` rotates calls across
+For long V5 runs, the {class}`MultiProviderClient` rotates calls across
 configured providers and fails over if any provider rate-limits:
 
 ```python
@@ -87,12 +87,12 @@ client = MultiProviderClient([
 ])
 ```
 
-## Cost guidance for V5.4 baseline + shock
+## Cost guidance for V5 baseline + shock
 
 Approximate cost on each provider (Berlin 96-zone scenario, seed 42, 50
 iters, ~27,500 calls per run, 2 runs for baseline + shock):
 
-| Provider | Cost (full V5.4 baseline + shock) |
+| Provider | Cost (full V5 baseline + shock) |
 |---|---|
 | codex-cli | $0 (OAuth, free tier sufficient) |
 | claude-code | $0 (OAuth, free tier sufficient) |
@@ -106,5 +106,5 @@ replicate.
 
 ## See also
 
-- {doc}`/tutorials/03_full_llm_v5` — V5.4 deep dive
+- {doc}`/tutorials/03_full_llm_v5` — V5 deep dive
 - {doc}`/api/index` — full API reference

@@ -75,7 +75,7 @@ class Agent:
     :func:`persona_summary`). The optional richer demographic fields
     (education, migration, employment, tenure) are populated only when
     the agent is sampled from the 10D Berlin joint distribution; legacy
-    engines (V1..V4-B) ignore them.
+    engines (V1..V4) ignore them.
 
     Attributes:
         agent_id: Stable integer identifier across runs.
@@ -136,7 +136,7 @@ class Agent:
     # ---- Richer demographic fields (zensus-richer-demographics) -----------
     # Optional. Populated when agent is sampled from the richer 10D joint
     # (joint_2011_richer.npz) via sample_ortsteile_agent_types.py
-    # --joint-version richer. All legacy engines (V1..V4-B) ignore these.
+    # --joint-version richer. All legacy engines (V1..V4) ignore these.
     # V5-hierarchical consumes them through persona_summary().
     education: Optional[str] = None              # "low" | "mid" | "high" | None
     migration_background: Optional[str] = None   # "none" | "EU" | "non-EU" | None
@@ -149,7 +149,7 @@ class Agent:
 # ---------------------------------------------------------------------------
 
 # Fixed ordering so the same agent always yields the same string. Omits any
-# field set to None so pre-richer agents (V1..V4-B) produce a shorter but
+# field set to None so pre-richer agents (V1..V4) produce a shorter but
 # still-valid persona.
 _PERSONA_FIELD_ORDER: tuple[str, ...] = (
     "age_head", "household_size", "has_children", "has_elderly",

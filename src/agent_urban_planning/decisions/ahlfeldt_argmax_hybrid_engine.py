@@ -41,7 +41,7 @@ EPSILON_DEFAULT = 6.6941
 class AhlfeldtArgmaxHybridEngine(AhlfeldtABMEngine):
     """Pure argmax with LLM-elicited per-type ``beta_k`` / ``kappa_k`` preferences.
 
-    The V4-B engine. Combines per-type heterogeneous preferences from
+    The V4 engine. Combines per-type heterogeneous preferences from
     Run 1-H's elicitation pipeline with the aggregate-from-counts
     pattern of :class:`AhlfeldtABMEngine`, but with no Fréchet / Normal
     / shock added to ``V_ij``. For each demographic type ``k`` the

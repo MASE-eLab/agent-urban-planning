@@ -1,4 +1,4 @@
-# Berlin V1-V5.4 reproducibility
+# Berlin V1-V5 reproducibility
 
 End-to-end reproduction guidance for the paper's 5 model variants on the
 synthetic 96-zone Berlin scenario.
@@ -29,15 +29,15 @@ synthetic 96-zone Berlin scenario.
   - ~3 hr each
   - Tier 3a
 * - **Tier 3c**
-  - V4-B baseline + shock
+  - V4 baseline + shock
   - ~3 hr
   - Tier 3a + LLM credits (~$5)
 * - **Tier 4 (cache replay)**
-  - V5.4 baseline + shock from bundled cache
+  - V5 baseline + shock from bundled cache
   - ~5 min
-  - Tier 3a + bundled `data/berlin/llm_cache_v5_4/`
+  - Tier 3a + bundled `data/berlin/llm_cache_v5/`
 * - **Tier 4 (live)**
-  - V5.4 baseline + shock with live LLM calls
+  - V5 baseline + shock with live LLM calls
   - ~10 hr
   - Tier 3a + LLM credits ($30-50)
 ```
@@ -86,21 +86,21 @@ python examples/03_berlin_replication/run_v3_argmax_normal.py
 ```
 Each ~3 hr. V2 and V3 are stochastic but seeded — deterministic at seed 42.
 
-### Tier 3c: V4-B (LLM elicitation)
+### Tier 3c: V4 (LLM elicitation)
 ```bash
-python examples/03_berlin_replication/run_v4b_hybrid.py --llm-provider codex-cli
+python examples/03_berlin_replication/run_v4_hybrid.py --llm-provider codex-cli
 ```
 Requires `codex` CLI authenticated. Cost: ~$5 in API credits.
 
-### Tier 4 (cache replay): V5.4 without LLM credits
+### Tier 4 (cache replay): V5 without LLM credits
 ```bash
-python examples/03_berlin_replication/run_v5_4_score_all.py --no-llm
+python examples/03_berlin_replication/run_v5_score_all.py --no-llm
 ```
-Replays bundled cache at `data/berlin/llm_cache_v5_4/`. ~5 min wall-clock.
+Replays bundled cache at `data/berlin/llm_cache_v5/`. ~5 min wall-clock.
 
-### Tier 4 (live): V5.4 with live LLM
+### Tier 4 (live): V5 with live LLM
 ```bash
-python examples/03_berlin_replication/run_v5_4_score_all.py --llm-provider codex-cli
+python examples/03_berlin_replication/run_v5_score_all.py --llm-provider codex-cli
 ```
 Cost: $30-50. Wall-clock: ~10 hr. Reproduces baseline + shock from scratch.
 
@@ -114,7 +114,7 @@ Produces:
 - `output/comparison/comparison_moments.csv` — cross-version moments table
 - `output/comparison/berlin_q_observed_and_log_change.png` — choropleth
 - `output/comparison/berlin_w_observed_and_log_change.png` — choropleth
-- `output/comparison/llm_abm_satisfaction.csv` — V5.4 self-rating sidebar
+- `output/comparison/llm_abm_satisfaction.csv` — V5 self-rating sidebar
 
 ## Numerical reproducibility expectations
 
@@ -123,9 +123,9 @@ Produces:
 | V1 (Baseline-softmax) | Fully deterministic | exact |
 | V2 (Baseline-ABM argmax) | Seeded stochastic | <1e-3 numerical |
 | V3 (Normal-ABM argmax) | Seeded stochastic | <1e-3 numerical |
-| V4-B (Hybrid-ABM) | Seeded + LLM cache | <1e-2 (LLM elicitation noise) |
-| V5.4 (LLM-ABM, cache replay) | Cache-deterministic | exact |
-| V5.4 (LLM-ABM, live) | Provider + temperature dependent | qualitative match only |
+| V4 (Hybrid-ABM) | Seeded + LLM cache | <1e-2 (LLM elicitation noise) |
+| V5 (LLM-ABM, cache replay) | Cache-deterministic | exact |
+| V5 (LLM-ABM, live) | Provider + temperature dependent | qualitative match only |
 
 ## Troubleshooting
 
@@ -144,7 +144,7 @@ python ... --llm-provider anthropic
 
 ### Numerical divergence
 - Verify seed=42 (the paper default).
-- For V5.4: use the bundled cache (`--no-llm` mode) or the same provider + temperature as the paper (codex-cli, temperature=0).
+- For V5: use the bundled cache (`--no-llm` mode) or the same provider + temperature as the paper (codex-cli, temperature=0).
 - Live LLM runs at different seeds will not be bit-identical to the paper.
 
 ## See also

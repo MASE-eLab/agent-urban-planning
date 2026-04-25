@@ -1,6 +1,6 @@
-"""Unified ``HybridDecisionEngine`` API class — V4-B via kwargs.
+"""Unified ``HybridDecisionEngine`` API class — V4 via kwargs.
 
-Implements the V4-B pattern: an LLM elicits per-agent preference weights
+Implements the V4 pattern: an LLM elicits per-agent preference weights
 (β, κ); a closed-form mixed-logit then computes discrete zone choice.
 The library exposes this as a single first-class API class so that user
 code instantiates one symbol regardless of the underlying implementation.
@@ -30,7 +30,7 @@ from agent_urban_planning.decisions.ahlfeldt_argmax_hybrid_engine import (
 
 
 class HybridDecisionEngine:
-    """LLM-elicited preferences + closed-form mixed-logit choice (V4-B).
+    """LLM-elicited preferences + closed-form mixed-logit choice (V4).
 
     The hybrid pattern: an LLM is queried *once per agent cluster* to
     elicit the cluster's per-agent preference weights (β: housing share;
@@ -56,7 +56,7 @@ class HybridDecisionEngine:
         ValueError: If ``llm_client`` is None.
 
     Examples:
-        V4-B reproduction with codex-cli::
+        V4 reproduction with codex-cli::
 
             >>> import agent_urban_planning as aup
             >>> engine = aup.HybridDecisionEngine(
@@ -69,7 +69,7 @@ class HybridDecisionEngine:
             >>> # sim = aup.SimulationEngine(scenario, agent_config, engine=engine)
             >>> # results = sim.run()
 
-        V4-B with claude-code (alternate provider)::
+        V4 with claude-code (alternate provider)::
 
             >>> engine = aup.HybridDecisionEngine(
             ...     params=scenario.ahlfeldt_params,
@@ -79,7 +79,7 @@ class HybridDecisionEngine:
     See Also:
         :class:`agent_urban_planning.UtilityEngine` — closed-form V1/V2/V3
         baselines (no LLM involvement).
-        :class:`agent_urban_planning.LLMDecisionEngine` — V5.0/V5.4
+        :class:`agent_urban_planning.LLMDecisionEngine` — V5.0/V5
         full-LLM-as-decision-maker pattern.
     """
 
@@ -91,7 +91,7 @@ class HybridDecisionEngine:
         llm_client: Any = None,
         **kwargs: Any,
     ) -> None:
-        # V4-B's underlying engine takes a high-level "elicitor" object that
+        # V4's underlying engine takes a high-level "elicitor" object that
         # wraps an LLM client + caching + per-type β/κ extraction. The simple
         # `llm_client` argument is accepted for API symmetry with
         # LLMDecisionEngine, but an elicitor must be provided for the engine
@@ -101,7 +101,7 @@ class HybridDecisionEngine:
         if elicitor is None and llm_client is None:
             raise ValueError(
                 "HybridDecisionEngine requires either an elicitor or an "
-                "llm_client; got neither. The V4-B pattern uses an elicitor "
+                "llm_client; got neither. The V4 pattern uses an elicitor "
                 "to extract per-type preference weights from the LLM. See "
                 "aup.research.berlin for AhlfeldtElicitor (the reference "
                 "implementation)."

@@ -17,10 +17,10 @@ under 10 seconds.
 :link: tutorials/04_berlin_replication
 :link-type: doc
 
-Reproduce the paper's V1-V5.4 Berlin baseline + East-West Express shock.
+Reproduce the paper's V1-V5 Berlin baseline + East-West Express shock.
 :::
 
-:::{grid-item-card} 🤖 Full LLM (V5.4)
+:::{grid-item-card} 🤖 Full LLM (V5)
 :link: tutorials/03_full_llm_v5
 :link-type: doc
 
@@ -48,8 +48,8 @@ first-class API classes, configurable via kwargs:
 | **V1** Baseline-softmax | Closed-form Cobb-Douglas + Fréchet softmax | `aup.UtilityEngine(mode="softmax")` |
 | **V2** Baseline-ABM argmax | ABM with Fréchet idiosyncratic shocks | `aup.UtilityEngine(mode="argmax", noise="frechet")` |
 | **V3** Normal-ABM argmax | ABM with Gaussian shocks | `aup.UtilityEngine(mode="argmax", noise="normal")` |
-| **V4-B** Hybrid-ABM | LLM-elicited preferences + closed-form choice | `aup.HybridDecisionEngine(elicitor=...)` |
-| **V5.4** LLM-ABM (paper headline) | Full LLM-as-decision-maker, score-all-96 | `aup.LLMDecisionEngine(response_format="score_all", rebalance_instruction=True, stage2_top_k_residences=10)` |
+| **V4** Hybrid-ABM | LLM-elicited preferences + closed-form choice | `aup.HybridDecisionEngine(elicitor=...)` |
+| **V5** LLM-ABM (paper headline) | Full LLM-as-decision-maker, score-all-96 | `aup.LLMDecisionEngine(response_format="score_all", rebalance_instruction=True, stage2_top_k_residences=10)` |
 
 ## Citation
 
@@ -79,7 +79,7 @@ concepts/llm_integration
 :hidden:
 :caption: Reproducibility
 
-reproducibility/berlin_v1_v5_4
+reproducibility/berlin_v1_v5
 reproducibility/shock_analysis
 ```
 

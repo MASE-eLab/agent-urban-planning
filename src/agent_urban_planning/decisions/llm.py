@@ -1,8 +1,8 @@
-"""Unified ``LLMDecisionEngine`` API class — V5.0 / V5.4 via kwargs.
+"""Unified ``LLMDecisionEngine`` API class — V5.0 / V5 via kwargs.
 
 Full LLM-as-decision-maker hierarchical engine. The headline contribution
 of the paper. Configure via constructor kwargs to reproduce V5.0 (top-5
-ranking) or V5.4 (score-all-96 with rebalance instruction and stage-2
+ranking) or V5 (score-all-96 with rebalance instruction and stage-2
 top-K cap).
 
 Internally delegates to :class:`AhlfeldtHierarchicalLLMEngine`, ported
@@ -12,7 +12,7 @@ Example::
 
     import agent_urban_planning as aup
 
-    # V5.4 reproduction (paper's headline LLM-ABM):
+    # V5 reproduction (paper's headline LLM-ABM):
     engine = aup.LLMDecisionEngine(
         params=scenario.ahlfeldt_params,
         llm_client=aup.llm.CodexCliClient(),
@@ -66,7 +66,7 @@ def _select_prompt_and_validator(
 
 
 class LLMDecisionEngine:
-    """Full LLM-as-decision-maker hierarchical engine (V5.0, V5.4).
+    """Full LLM-as-decision-maker hierarchical engine (V5.0, V5).
 
     The LLM is queried per agent cluster per market iteration to make
     discrete location decisions directly: stage 1 selects a residence,
@@ -74,12 +74,12 @@ class LLMDecisionEngine:
     paper's headline contribution and the ``aup`` library's core
     extensibility point.
 
-    Configure via constructor kwargs to reproduce V5.0 or V5.4 from the
+    Configure via constructor kwargs to reproduce V5.0 or V5 from the
     paper:
 
     * **V5.0**: ``response_format="top5"`` with default flags (no
       rebalance instruction, no stage-2 cap).
-    * **V5.4** (paper headline): ``response_format="score_all"``,
+    * **V5** (paper headline): ``response_format="score_all"``,
       ``rebalance_instruction=True``, and ``stage2_top_k_residences=10``
       to keep stage-2 fan-out tractable when the LLM scores all 96
       zones in stage 1.
@@ -90,17 +90,17 @@ class LLMDecisionEngine:
         llm_client: An :class:`agent_urban_planning.llm.LLMClient` instance
             (or any object with a ``.complete(user, system="")`` method).
         response_format: ``"top5"`` for V5.0 (LLM emits top-5 ranking).
-            ``"score_all"`` for V5.4 (LLM scores all N zones; the paper's
-            headline). Default ``"score_all"`` (V5.4).
+            ``"score_all"`` for V5 (LLM scores all N zones; the paper's
+            headline). Default ``"score_all"`` (V5).
         rebalance_instruction: If ``True``, the stage-1 prompt includes
             an explicit "weight affordability ≥ amenity" instruction.
-            Validated in the V5.3 ablation. Default ``False`` (the V5.4
+            Validated in the V5.3 ablation. Default ``False`` (the V5
             paper run sets this to ``True``).
         stage2_top_k_residences: When set to an int, stage-2 fan-out is
             capped at the top-K residences per cluster (by stage-1 score),
             preventing the cost blowup from score-all stage-1 producing
             96 residences per cluster. ``None`` disables the cap.
-            Default ``None``; the V5.4 paper run uses ``10``.
+            Default ``None``; the V5 paper run uses ``10``.
         prompt_builder: Optional override for the stage-1 prompt builder
             callable. When provided, takes precedence over the
             ``response_format`` selection.
@@ -118,7 +118,7 @@ class LLMDecisionEngine:
             "score_all"}``, or if ``llm_client`` is None.
 
     Examples:
-        V5.4 reproduction (paper's headline LLM-ABM)::
+        V5 reproduction (paper's headline LLM-ABM)::
 
             >>> import agent_urban_planning as aup
             >>> engine = aup.LLMDecisionEngine(
@@ -154,11 +154,11 @@ class LLMDecisionEngine:
             ... )
 
     Notes:
-        The V5.4 score-all configuration produces 96-zone stage-1
+        The V5 score-all configuration produces 96-zone stage-1
         distributions, which would cause stage-2 fan-out to explode
         (50 clusters × 96 residences = 4800 stage-2 LLM calls per
         market iteration). The ``stage2_top_k_residences`` kwarg caps
-        this at top-K residences (default for V5.4 production: 10);
+        this at top-K residences (default for V5 production: 10);
         residences outside the top-K fall back to the sampler's
         uniform-workplace default in
         :class:`AhlfeldtHierarchicalLLMEngine`.
@@ -166,7 +166,7 @@ class LLMDecisionEngine:
     See Also:
         :class:`agent_urban_planning.UtilityEngine` — closed-form V1/V2/V3
         baselines.
-        :class:`agent_urban_planning.HybridDecisionEngine` — V4-B
+        :class:`agent_urban_planning.HybridDecisionEngine` — V4
         (LLM elicits preferences, closed-form choice).
 
     References:

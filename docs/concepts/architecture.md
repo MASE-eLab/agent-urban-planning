@@ -11,8 +11,8 @@ flowchart TB
     Sim --> Pop[AgentPopulation<br/>N agents with demographics]
     Sim --> Engine[DecisionEngine<br/>pluggable]
     Engine --> Util[UtilityEngine<br/>V1, V2, V3]
-    Engine --> Hybrid[HybridDecisionEngine<br/>V4-B]
-    Engine --> LLM[LLMDecisionEngine<br/>V5.0, V5.4]
+    Engine --> Hybrid[HybridDecisionEngine<br/>V4]
+    Engine --> LLM[LLMDecisionEngine<br/>V5.0, V5]
     Sim --> Market[Market<br/>tâtonnement clearing]
     Market --> Results[Results<br/>metrics + traces + history]
 ```
@@ -33,8 +33,8 @@ Discrete-choice mechanism. Three first-class implementations:
 
 - {class}`UtilityEngine` — closed-form Cobb-Douglas + Fréchet (V1/V2/V3)
 - {class}`HybridDecisionEngine` — LLM elicits preferences + closed-form
-  choice (V4-B)
-- {class}`LLMDecisionEngine` — full LLM as decision maker (V5.0/V5.4)
+  choice (V4)
+- {class}`LLMDecisionEngine` — full LLM as decision maker (V5.0/V5)
 
 Custom subclasses welcome (see
 {doc}`/tutorials/02_custom_decision_engine`).
@@ -106,5 +106,5 @@ there.
 
 ## See also
 
-- {doc}`decision_engines` — the V1-V5.4 variants in depth
+- {doc}`decision_engines` — the V1-V5 variants in depth
 - {doc}`llm_integration` — how to plug in different LLM providers
