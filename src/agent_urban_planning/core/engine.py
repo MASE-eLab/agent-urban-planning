@@ -21,7 +21,7 @@ from agent_urban_planning.decisions.clustering import (
     ClusteringConfig,
     ClusterizedDecisionEngine,
 )
-from agent_urban_planning.decisions.utility import UtilityEngine
+from agent_urban_planning.decisions._legacy_singapore_utility import UtilityEngine
 from agent_urban_planning.core.environment import Environment
 from agent_urban_planning.core.market import AhlfeldtMarket, HousingMarket, MarketResult
 from agent_urban_planning.core.metrics import WelfareMetrics, compute_metrics

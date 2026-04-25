@@ -1,169 +1,166 @@
-"""Utility-based decision engine using literature-calibrated coefficients.
+"""Unified ``UtilityEngine`` API class — V1 / V2 / V3 via kwargs.
 
-The utility model is a linear-in-parameters discrete choice:
+This module exposes the public :class:`UtilityEngine` class. Configure via
+constructor kwargs to reproduce the paper's three baseline-family variants:
 
-    V_z = β₁ × (price_z / income_i) + β₂ × commute_iz + β₃ × facilities_z + β₄ × amenity_z
+  * ``mode='softmax'``                       → V1 (Baseline-softmax)
+  * ``mode='argmax', noise='frechet'``       → V2 (Baseline-ABM argmax)
+  * ``mode='argmax', noise='normal'``        → V3 (Normal-ABM argmax)
 
-Default coefficients are from published housing economics studies:
-  - β₁ = -2.0: calibrated from Phang & Wong (1997) Singapore HDB demand elasticity η ≈ -0.5
-  - β₂ = -0.015: from Lerman (1977) commute disutility
-  - β₃ = 0.5: from Bayer, Ferreira & McMillan (2007) services/price ratio
-  - β₄ = 0.8: from Bayer et al. (2007) amenity/price ratio
+Internally delegates to :class:`AhlfeldtUtilityEngine` (softmax) or
+:class:`AhlfeldtABMEngine` (argmax), both ported from the dev repo. The
+public class is a thin compatibility/dispatch wrapper so that user code
+references one symbol — ``aup.UtilityEngine`` — regardless of which
+underlying implementation handles the call.
 
-See ``estimation.py:literature_fallback()`` for full citations and
-calibration methodology.
+Example::
+
+    import agent_urban_planning as aup
+
+    # V1 reproduction:
+    engine = aup.UtilityEngine(scenario.ahlfeldt_params, mode="softmax")
+
+    # V2 reproduction:
+    engine = aup.UtilityEngine(
+        scenario.ahlfeldt_params, mode="argmax", noise="frechet",
+    )
+
+    # V3 reproduction:
+    engine = aup.UtilityEngine(
+        scenario.ahlfeldt_params, mode="argmax", noise="normal",
+    )
 """
-
 from __future__ import annotations
 
-from agent_urban_planning.core.agents import Agent
-from agent_urban_planning.decisions.base import ZoneChoice
-from agent_urban_planning.core.environment import Environment, Zone
+from typing import Any, Literal
+
+from agent_urban_planning.decisions.ahlfeldt_abm_engine import AhlfeldtABMEngine
+from agent_urban_planning.decisions.ahlfeldt_utility import AhlfeldtUtilityEngine
 
 
-# Default β coefficients from literature. These are loaded once at module
-# level so every UtilityEngine instance uses the same values.
-# Full citations and calibration methodology in estimation.py:literature_fallback().
-_DEFAULT_BETA_PRICE_INCOME = -2.0       # Phang & Wong (1997)
-_DEFAULT_BETA_COMMUTE = -0.015          # Lerman (1977)
-_DEFAULT_BETA_FACILITIES = 0.5          # Bayer et al. (2007)
-_DEFAULT_BETA_AMENITY = 0.8             # Bayer et al. (2007)
-_DEFAULT_PRICE_ELASTICITY = -0.5        # Phang & Wong (1997)
-
-
-def _compute_facilities_density(zone: Zone) -> float:
-    """Average quality of all facilities in a zone.
-
-    Quality scores are per-capita densities (computed at YAML generation
-    time from real Census population + real facility counts). Returns 0
-    if the zone has no facilities.
-    """
-    if not zone.facilities:
-        return 0.0
-    return sum(f.quality for f in zone.facilities) / len(zone.facilities)
+_VALID_MODES = ("softmax", "argmax")
+_VALID_NOISE = ("frechet", "normal")
 
 
 class UtilityEngine:
-    """Decision engine using literature-calibrated β coefficients.
+    """Closed-form Cobb-Douglas + Fréchet utility decision engine.
 
-    Computes zone utility as:
+    Configure via constructor kwargs to reproduce V1 (Baseline-softmax),
+    V2 (Baseline-ABM argmax with Fréchet noise), or V3 (Normal-ABM argmax
+    with Gaussian noise) from the paper.
 
-        V_z = β₁ × (price_z / income) + β₂ × commute_z + β₃ × facilities_z + β₄ × amenity_z
+    Args:
+        params: An ``AhlfeldtParams`` instance from
+            :mod:`agent_urban_planning.data.loaders` carrying the model's
+            structural elasticities (``alpha``, ``beta``, ``epsilon``,
+            ``kappa_eps``, etc.).
+        mode: ``"softmax"`` for the deterministic V1 pattern (closed-form
+            softmax over Fréchet utility). ``"argmax"`` for the V2/V3 ABM
+            pattern (per-agent draw + argmax). Default ``"softmax"``.
+        noise: When ``mode="argmax"``, selects the per-agent shock
+            distribution. ``"frechet"`` for V2; ``"normal"`` for V3.
+            Ignored when ``mode="softmax"``. Default ``"frechet"``.
+        **kwargs: Forwarded to the underlying implementation
+            (:class:`AhlfeldtUtilityEngine` for softmax,
+            :class:`AhlfeldtABMEngine` for argmax). Common kwargs:
+            ``num_agents``, ``batch_size``, ``seed``, ``dtype``.
 
-    Coefficients default to published housing economics studies (Phang &
-    Wong 1997, Lerman 1977, Bayer et al. 2007). Custom coefficients can
-    be provided via constructor arguments or by using
-    ``EstimatedUtilityEngine`` with a JSON file.
+    Raises:
+        ValueError: If ``mode`` is not one of ``{"softmax", "argmax"}``,
+            or if ``noise`` is not one of ``{"frechet", "normal"}``.
 
-    When ``budget_constraint=True`` (default), zones that the agent
-    cannot afford (per MAS MSR / HDB income ceiling) are excluded from
-    the choice set before utility computation. If no zone is affordable,
-    the agent gets the "outside option" — staying in their home zone at
-    zero utility.
+    Examples:
+        V1 reproduction (Baseline-softmax)::
+
+            >>> import agent_urban_planning as aup
+            >>> engine = aup.UtilityEngine(params, mode="softmax")
+            >>> # Use as you would any DecisionEngine.
+            >>> # sim = aup.SimulationEngine(scenario=sc, agent_config=ag, engine=engine)
+            >>> # results = sim.run()
+
+        V2 reproduction (Baseline-ABM argmax, Fréchet shocks)::
+
+            >>> engine = aup.UtilityEngine(
+            ...     params, mode="argmax", noise="frechet",
+            ...     num_agents=1_000_000, seed=42,
+            ... )
+
+        V3 reproduction (Normal-ABM argmax, Gaussian shocks)::
+
+            >>> engine = aup.UtilityEngine(
+            ...     params, mode="argmax", noise="normal",
+            ...     num_agents=1_000_000, seed=42,
+            ... )
+
+    Notes:
+        Internally this class is a dispatch wrapper around two
+        implementation classes (:class:`AhlfeldtUtilityEngine` and
+        :class:`AhlfeldtABMEngine`). All other attribute and method
+        access is forwarded transparently to the underlying implementation
+        via ``__getattr__``, so any feature documented on those classes is
+        usable on a ``UtilityEngine`` instance.
+
+    See Also:
+        :class:`agent_urban_planning.HybridDecisionEngine` — V4-B (LLM
+        elicits per-agent preference weights, then closed-form choice).
+        :class:`agent_urban_planning.LLMDecisionEngine` — V5.0 / V5.4
+        (full LLM-as-decision-maker hierarchical engine).
+
+    References:
+        Ahlfeldt, G. M., Redding, S. J., Sturm, D. M., Wolf, N. (2015).
+        The economics of density: Evidence from the Berlin Wall.
+        *Econometrica*, 83(6), 2127-2189.
     """
 
     def __init__(
         self,
-        budget_constraint: bool = True,
-        beta_price_income: float = _DEFAULT_BETA_PRICE_INCOME,
-        beta_commute: float = _DEFAULT_BETA_COMMUTE,
-        beta_facilities: float = _DEFAULT_BETA_FACILITIES,
-        beta_amenity: float = _DEFAULT_BETA_AMENITY,
-    ):
-        self.budget_constraint = budget_constraint
-        self.beta_price_income = beta_price_income
-        self.beta_commute = beta_commute
-        self.beta_facilities = beta_facilities
-        self.beta_amenity = beta_amenity
+        params: Any,
+        *,
+        mode: Literal["softmax", "argmax"] = "softmax",
+        noise: Literal["frechet", "normal"] = "frechet",
+        **kwargs: Any,
+    ) -> None:
+        if mode not in _VALID_MODES:
+            raise ValueError(
+                f"mode={mode!r} is not valid; expected one of {_VALID_MODES}"
+            )
+        if noise not in _VALID_NOISE:
+            raise ValueError(
+                f"noise={noise!r} is not valid; expected one of {_VALID_NOISE}"
+            )
+        self._mode = mode
+        self._noise = noise
+        if mode == "softmax":
+            self._impl = AhlfeldtUtilityEngine(params, **kwargs)
+        else:  # argmax
+            self._impl = AhlfeldtABMEngine(
+                params, shock_distribution=noise, **kwargs,
+            )
 
     @property
-    def price_elasticity(self) -> float:
-        """Approximate price elasticity of housing demand.
+    def mode(self) -> str:
+        """The configured mode: ``"softmax"`` or ``"argmax"``."""
+        return self._mode
 
-        Used by ``market-clearing-v2`` for the tatonnement step size.
-        """
-        return _DEFAULT_PRICE_ELASTICITY
+    @property
+    def noise(self) -> str:
+        """The configured per-agent noise distribution (only relevant for argmax mode)."""
+        return self._noise
 
-    def set_cache(self, cache) -> None:
-        return None
+    def decide_batch(self, *args: Any, **kwargs: Any) -> Any:
+        """Forward to the underlying implementation's ``decide_batch``."""
+        return self._impl.decide_batch(*args, **kwargs)
 
-    def decide_batch(
-        self,
-        agents,
-        environment: Environment,
-        zone_options: list[str],
-        prices: dict[str, float],
-    ):
-        return [self.decide(a, environment, zone_options, prices) for a in agents]
+    def __getattr__(self, name: str) -> Any:
+        # Forward unknown attribute access to the wrapped implementation.
+        # Note: __getattr__ is only called when attribute lookup fails on
+        # the instance itself, so this doesn't interfere with `_impl` etc.
+        if name.startswith("_"):
+            raise AttributeError(name)
+        return getattr(self._impl, name)
 
-    def _filter_affordable(
-        self,
-        agent: Agent,
-        zone_options: list[str],
-        prices: dict[str, float],
-    ) -> list[str]:
-        """Filter zone_options to those the agent can afford."""
-        if not self.budget_constraint:
-            return list(zone_options)
-        from agent_urban_planning.core.constraints import affordable_zones
-        return affordable_zones(agent.income, {z: prices.get(z, 0) for z in zone_options})
-
-    def decide(
-        self,
-        agent: Agent,
-        environment: Environment,
-        zone_options: list[str],
-        prices: dict[str, float],
-    ) -> ZoneChoice:
-        # Budget constraint: filter to affordable zones
-        filtered_zones = self._filter_affordable(agent, zone_options, prices)
-
-        # Outside option: if nothing affordable, return home zone at zero utility
-        if not filtered_zones:
-            home = getattr(agent, "home_zone", "") or (zone_options[0] if zone_options else "unknown")
-            return ZoneChoice(
-                zone_name=home,
-                utility=0.0,
-                zone_utilities={z: 0.0 for z in zone_options},
-                workplace=agent.job_location,
-            )
-
-        zone_utilities = {}
-        for zone_name in zone_options:
-            zone = environment.get_zone(zone_name)
-            price = prices.get(zone_name, zone.housing_base_price)
-
-            if zone_name not in filtered_zones:
-                zone_utilities[zone_name] = 0.0
-                continue
-
-            # Price / income ratio
-            price_income = price / max(agent.income, 1.0)
-
-            # Commute time to job location
-            route = environment.transport.get_best_route(zone_name, agent.job_location)
-            commute = route.time_minutes if route is not None else 120.0
-
-            # Facility density (average quality, which is per-capita from builder)
-            facilities = _compute_facilities_density(zone)
-
-            # Amenity score (per-capita total facility density from builder)
-            amenity = zone.amenity_score
-
-            # Linear utility: V = β₁(price/income) + β₂(commute) + β₃(facilities) + β₄(amenity)
-            v = (
-                self.beta_price_income * price_income
-                + self.beta_commute * commute
-                + self.beta_facilities * facilities
-                + self.beta_amenity * amenity
-            )
-            zone_utilities[zone_name] = v
-
-        # Choose best from AFFORDABLE zones only
-        best_zone = max(filtered_zones, key=lambda z: zone_utilities.get(z, -1e9))
-        return ZoneChoice(
-            zone_name=best_zone,
-            utility=zone_utilities[best_zone],
-            zone_utilities=zone_utilities,
-            workplace=agent.job_location,
+    def __repr__(self) -> str:
+        return (
+            f"UtilityEngine(mode={self._mode!r}, noise={self._noise!r}, "
+            f"_impl={type(self._impl).__name__})"
         )

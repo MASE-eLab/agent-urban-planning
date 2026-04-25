@@ -191,7 +191,7 @@ class DecisionTreeClustering(ClusteringAlgorithm):
             return NoneClustering().cluster(agents)
 
         from sklearn.tree import DecisionTreeRegressor
-        from agent_urban_planning.decisions.utility import UtilityEngine
+        from agent_urban_planning.decisions._legacy_singapore_utility import UtilityEngine
 
         feats = features or DEFAULT_FEATURES
         X = _standardize(_extract_feature_matrix(agents, feats))

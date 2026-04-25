@@ -34,13 +34,18 @@ from agent_urban_planning.core.metrics import WelfareMetrics, compute_metrics
 from agent_urban_planning.core.results import SimulationResults, AgentResult
 from agent_urban_planning.core.run_metadata import RunMetadata
 
-# Decision-engine re-exports (Phase 3 will consolidate to API class names).
+# Decision-engine re-exports — Phase 3 consolidated API.
 from agent_urban_planning.decisions.base import (
     DecisionEngine,
     LocationChoice,
     ZoneChoice,
 )
 from agent_urban_planning.decisions.utility import UtilityEngine
+from agent_urban_planning.decisions.hybrid import HybridDecisionEngine
+from agent_urban_planning.decisions.llm import LLMDecisionEngine
+
+# Underlying paper-internal classes (advanced users only — the public
+# API above is the recommended entry point for V1/V2/V3/V4-B/V5.4).
 from agent_urban_planning.decisions.ahlfeldt_utility import AhlfeldtUtilityEngine
 from agent_urban_planning.decisions.ahlfeldt_abm_engine import AhlfeldtABMEngine
 from agent_urban_planning.decisions.ahlfeldt_argmax_hybrid_engine import (
@@ -48,6 +53,9 @@ from agent_urban_planning.decisions.ahlfeldt_argmax_hybrid_engine import (
 )
 from agent_urban_planning.decisions.ahlfeldt_hierarchical_llm_engine import (
     AhlfeldtHierarchicalLLMEngine,
+)
+from agent_urban_planning.decisions._legacy_singapore_utility import (
+    UtilityEngine as _LegacySingaporeUtilityEngine,
 )
 
 # Subpackages re-exported as namespaces.
@@ -68,9 +76,10 @@ __all__ = [
     "WelfareMetrics", "compute_metrics",
     "SimulationResults", "AgentResult",
     "RunMetadata",
-    # Decisions (interim — Phase 3 will add UtilityEngine config-driven, HybridDecisionEngine, LLMDecisionEngine)
+    # Decisions — public API
     "DecisionEngine", "LocationChoice", "ZoneChoice",
-    "UtilityEngine",
+    "UtilityEngine", "HybridDecisionEngine", "LLMDecisionEngine",
+    # Decisions — underlying paper-internal (advanced)
     "AhlfeldtUtilityEngine", "AhlfeldtABMEngine",
     "AhlfeldtArgmaxHybridEngine", "AhlfeldtHierarchicalLLMEngine",
     # Subpackages

@@ -10,7 +10,7 @@ from typing import Optional, Protocol
 
 from agent_urban_planning.core.agents import Agent, PreferenceWeights
 from agent_urban_planning.decisions.base import ZoneChoice
-from agent_urban_planning.decisions.utility import UtilityEngine
+from agent_urban_planning.decisions._legacy_singapore_utility import UtilityEngine
 from agent_urban_planning.core.environment import Environment
 
 
