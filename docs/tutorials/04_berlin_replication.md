@@ -83,7 +83,7 @@ and V5.4 reproducibility depends on:
 
 Cross-variant numerical equivalence to the dev repo's outputs is
 documented to within 1e-3 tolerance in the
-{doc}`reproducibility/berlin_v1_v5_4` page.
+{doc}`/reproducibility/berlin_v1_v5_4` page.
 
 ## Troubleshooting
 
@@ -101,5 +101,5 @@ runs at different seeds will not be bit-identical to the paper.
 
 ## Next steps
 
-- {doc}`/api/decisions` — full API reference.
+- {doc}`/api/index` — full API reference.
 - {doc}`/reproducibility/berlin_v1_v5_4` — reproducibility tier definitions.

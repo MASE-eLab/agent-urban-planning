@@ -120,4 +120,4 @@ engine = aup.LLMDecisionEngine(
 ## Next steps
 
 - {doc}`04_berlin_replication` — reproduce the paper's V5.4 baseline + shock.
-- {doc}`/api/decisions` — full API reference for `LLMDecisionEngine`.
+- {doc}`/api/index` — full API reference for `LLMDecisionEngine`.

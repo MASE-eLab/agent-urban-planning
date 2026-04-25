@@ -1,0 +1,153 @@
+# Berlin V1-V5.4 reproducibility
+
+End-to-end reproduction guidance for the paper's 5 model variants on the
+synthetic 96-zone Berlin scenario.
+
+## Reproducibility tiers
+
+```{list-table}
+:header-rows: 1
+
+* - Tier
+  - What
+  - Wall-clock
+  - Prerequisites
+* - **Tier 1**
+  - `pip install agent-urban-planning` + `import agent_urban_planning`
+  - <30 s
+  - Python 3.9+
+* - **Tier 2**
+  - `python examples/01_quickstart_two_zone.py` (5-variant smoke test)
+  - <10 s
+  - Tier 1
+* - **Tier 3a**
+  - V1 baseline + shock
+  - ~3 hr
+  - Tier 2 + bundled Berlin data (in git, not PyPI)
+* - **Tier 3b**
+  - V2 / V3 baseline + shock
+  - ~3 hr each
+  - Tier 3a
+* - **Tier 3c**
+  - V4-B baseline + shock
+  - ~3 hr
+  - Tier 3a + LLM credits (~$5)
+* - **Tier 4 (cache replay)**
+  - V5.4 baseline + shock from bundled cache
+  - ~5 min
+  - Tier 3a + bundled `data/berlin/llm_cache_v5_4/`
+* - **Tier 4 (live)**
+  - V5.4 baseline + shock with live LLM calls
+  - ~10 hr
+  - Tier 3a + LLM credits ($30-50)
+```
+
+## Step-by-step
+
+### Tier 1: Install
+```bash
+pip install agent-urban-planning
+python -c "import agent_urban_planning as aup; print(aup.__version__)"
+# → 0.1.0
+```
+
+### Tier 2: Smoke test (no data needed)
+```bash
+python examples/01_quickstart_two_zone.py
+```
+Should print all 5 paper variants instantiated successfully.
+
+### Tier 3+ requires git clone
+
+The bundled Berlin Ortsteile NPZ files are git-only (excluded from PyPI
+sdist). Tier 3 and Tier 4 require:
+
+```bash
+git clone https://github.com/<TBD>/agent-urban-planning.git
+cd agent-urban-planning
+pip install -e ".[llm,plot,berlin]"
+```
+
+### Tier 3a: V1 (no LLM)
+```bash
+python examples/03_berlin_replication/run_v1_softmax.py
+```
+Outputs:
+- `output/berlin_v1_softmax/per_zone.csv`
+- `output/berlin_v1_shock_east_west/per_zone.csv`
+
+Numerical match to dev repo's V1: within 1e-3 numerical tolerance (V1 is
+deterministic at seed 42).
+
+### Tier 3b: V2, V3 (no LLM)
+```bash
+python examples/03_berlin_replication/run_v2_argmax_frechet.py
+python examples/03_berlin_replication/run_v3_argmax_normal.py
+```
+Each ~3 hr. V2 and V3 are stochastic but seeded — deterministic at seed 42.
+
+### Tier 3c: V4-B (LLM elicitation)
+```bash
+python examples/03_berlin_replication/run_v4b_hybrid.py --llm-provider codex-cli
+```
+Requires `codex` CLI authenticated. Cost: ~$5 in API credits.
+
+### Tier 4 (cache replay): V5.4 without LLM credits
+```bash
+python examples/03_berlin_replication/run_v5_4_score_all.py --no-llm
+```
+Replays bundled cache at `data/berlin/llm_cache_v5_4/`. ~5 min wall-clock.
+
+### Tier 4 (live): V5.4 with live LLM
+```bash
+python examples/03_berlin_replication/run_v5_4_score_all.py --llm-provider codex-cli
+```
+Cost: $30-50. Wall-clock: ~10 hr. Reproduces baseline + shock from scratch.
+
+## After all variants complete
+
+```bash
+python examples/03_berlin_replication/compare_and_plot.py
+```
+
+Produces:
+- `output/comparison/comparison_moments.csv` — cross-version moments table
+- `output/comparison/berlin_q_observed_and_log_change.png` — choropleth
+- `output/comparison/berlin_w_observed_and_log_change.png` — choropleth
+- `output/comparison/llm_abm_satisfaction.csv` — V5.4 self-rating sidebar
+
+## Numerical reproducibility expectations
+
+| Variant | Seed-determinism | Tolerance vs dev repo |
+|---|---|---|
+| V1 (Baseline-softmax) | Fully deterministic | exact |
+| V2 (Baseline-ABM argmax) | Seeded stochastic | <1e-3 numerical |
+| V3 (Normal-ABM argmax) | Seeded stochastic | <1e-3 numerical |
+| V4-B (Hybrid-ABM) | Seeded + LLM cache | <1e-2 (LLM elicitation noise) |
+| V5.4 (LLM-ABM, cache replay) | Cache-deterministic | exact |
+| V5.4 (LLM-ABM, live) | Provider + temperature dependent | qualitative match only |
+
+## Troubleshooting
+
+### "Bundled Berlin data missing"
+You ran `pip install` instead of `git clone`. Re-clone the repo.
+
+### LLM provider not configured
+```bash
+# Verify codex-cli auth
+codex login
+
+# Or use Anthropic SDK
+export ANTHROPIC_API_KEY=...
+python ... --llm-provider anthropic
+```
+
+### Numerical divergence
+- Verify seed=42 (the paper default).
+- For V5.4: use the bundled cache (`--no-llm` mode) or the same provider + temperature as the paper (codex-cli, temperature=0).
+- Live LLM runs at different seeds will not be bit-identical to the paper.
+
+## See also
+
+- {doc}`shock_analysis` — methodology for the East-West Express τ shock
+- {doc}`/tutorials/04_berlin_replication` — task-oriented walkthrough
