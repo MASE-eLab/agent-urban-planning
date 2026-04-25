@@ -9,7 +9,7 @@ authors:
 version: 0.1.0
 date-released: "2026-04-25"
 license: MIT
-repository-code: "https://github.com/TBD/agent-urban-planning"
+repository-code: "https://github.com/MASE-eLab/agent-urban-planning"
 url: "https://agent-urban-planning.readthedocs.io"
 keywords:
   - "agent-based modeling"
