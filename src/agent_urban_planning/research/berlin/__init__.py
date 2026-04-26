@@ -11,7 +11,7 @@ These modules are imported by the
 :class:`HybridDecisionEngine`, and :class:`LLMDecisionEngine` public
 classes to provide Berlin-specific behavior. End users typically do not
 import them directly; the example scripts at
-``examples/03_berlin_replication/`` use them via
+``examples/02_berlin_replication/`` use them via
 :mod:`agent_urban_planning.research.berlin.shock_pipeline`.
 """
 from agent_urban_planning.research.berlin.three_version_driver import (

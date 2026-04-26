@@ -70,7 +70,7 @@ pip install -e ".[llm,plot,berlin]"
 
 ### Tier 3a: V1 (no LLM)
 ```bash
-python examples/03_berlin_replication/run_v1_softmax.py
+python examples/02_berlin_replication/run_v1_softmax.py
 ```
 Outputs:
 - `output/berlin_v1_softmax/per_zone.csv`
@@ -81,40 +81,47 @@ deterministic at seed 42).
 
 ### Tier 3b: V2, V3 (no LLM)
 ```bash
-python examples/03_berlin_replication/run_v2_argmax_frechet.py
-python examples/03_berlin_replication/run_v3_argmax_normal.py
+python examples/02_berlin_replication/run_v2_argmax_frechet.py
+python examples/02_berlin_replication/run_v3_argmax_normal.py
 ```
 Each ~3 hr. V2 and V3 are stochastic but seeded — deterministic at seed 42.
 
 ### Tier 3c: V4 (LLM elicitation)
 ```bash
-python examples/03_berlin_replication/run_v4_hybrid.py --llm-provider codex-cli
+python examples/02_berlin_replication/run_v4_hybrid.py --llm-provider codex-cli
 ```
 Requires `codex` CLI authenticated. Cost: ~$5 in API credits.
 
 ### Tier 4 (cache replay): V5 without LLM credits
 ```bash
-python examples/03_berlin_replication/run_v5_score_all.py --no-llm
+python examples/02_berlin_replication/run_v5_score_all.py --no-llm
 ```
 Replays bundled cache at `data/berlin/llm_cache_v5/`. ~5 min wall-clock.
 
 ### Tier 4 (live): V5 with live LLM
 ```bash
-python examples/03_berlin_replication/run_v5_score_all.py --llm-provider codex-cli
+python examples/02_berlin_replication/run_v5_score_all.py --llm-provider codex-cli
 ```
 Cost: $30-50. Wall-clock: ~10 hr. Reproduces baseline + shock from scratch.
 
 ## After all variants complete
 
-```bash
-python examples/03_berlin_replication/compare_and_plot.py
+Each `output/{variant}/per_zone.csv` and
+`output/{variant}_shock_east_west/per_zone.csv` is a 96-row CSV with
+columns `zone_id, Q_sim, HR_sim, HM_sim, wage_sim, Q_obs, HR_obs,
+HM_obs, wage_obs`. Use these directly for cross-variant comparisons:
+
+```python
+import pandas as pd
+v1 = pd.read_csv("output/berlin_v1_softmax/per_zone.csv")
+v1_shock = pd.read_csv("output/berlin_v1_softmax_shock_east_west/per_zone.csv")
+dlog_Q = (v1_shock.Q_sim / v1.Q_sim).pipe(lambda s: s.apply("log"))
+print(dlog_Q.describe())
 ```
 
-Produces:
-- `output/comparison/comparison_moments.csv` — cross-version moments table
-- `output/comparison/berlin_q_observed_and_log_change.png` — choropleth
-- `output/comparison/berlin_w_observed_and_log_change.png` — choropleth
-- `output/comparison/llm_abm_satisfaction.csv` — V5 self-rating sidebar
+The paper's headline cross-variant moments table and choropleths are
+in `figures/comparison_moments.csv`, `figures/berlin_dlogQ.png`,
+`figures/berlin_dlogW.png` (bundled in the repo).
 
 ## Numerical reproducibility expectations
 

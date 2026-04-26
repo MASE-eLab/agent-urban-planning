@@ -65,7 +65,7 @@ Three options:
    and rerun:
 
    ```bash
-   python examples/03_berlin_replication/run_v5_score_all.py \
+   python examples/02_berlin_replication/run_v5_score_all.py \
        --llm-provider codex-cli
    ```
 
@@ -80,7 +80,7 @@ Three options:
    curl -L -o llm_cache_v5.tar.gz \
      https://github.com/MASE-eLab/agent-urban-planning/releases/download/v0.1.0-data/llm_cache_v5.tar.gz
    tar -xzf llm_cache_v5.tar.gz -C data/berlin/
-   python examples/03_berlin_replication/run_v5_score_all.py --no-llm
+   python examples/02_berlin_replication/run_v5_score_all.py --no-llm
    ```
 
    The tarball extracts to `data/berlin/llm_cache_v5/{baseline,shock}/`.
@@ -92,7 +92,7 @@ Three options:
    the full pipeline):
 
    ```bash
-   python examples/03_berlin_replication/run_v5_score_all.py \
+   python examples/02_berlin_replication/run_v5_score_all.py \
        --llm-provider stub-score-all --num-agents 1000 --iters 3
    ```
 
@@ -138,4 +138,4 @@ The block-to-Bezirk and block-to-Ortsteil crosswalks are built from:
 
 For full reproducibility instructions, see
 [`docs/reproducibility/berlin_v1_v5.md`](../docs/reproducibility/berlin_v1_v5.md)
-and the example scripts at `examples/03_berlin_replication/`.
+and the example scripts at `examples/02_berlin_replication/`.

@@ -33,7 +33,7 @@ without any LLM credits.
 ## Run V1 (no LLM, simplest case)
 
 ```bash
-python examples/03_berlin_replication/run_v1_softmax.py
+python examples/02_berlin_replication/run_v1_softmax.py
 ```
 
 Produces:
@@ -43,7 +43,7 @@ Produces:
 ## Run V5 (paper headline, cache-replay mode)
 
 ```bash
-python examples/03_berlin_replication/run_v5_score_all.py --no-llm
+python examples/02_berlin_replication/run_v5_score_all.py --no-llm
 ```
 
 Replays cached LLM responses; ~5 min wall-clock. Produces:
@@ -52,7 +52,7 @@ Replays cached LLM responses; ~5 min wall-clock. Produces:
 ## Run V5 (live LLM mode)
 
 ```bash
-python examples/03_berlin_replication/run_v5_score_all.py --llm-provider codex-cli
+python examples/02_berlin_replication/run_v5_score_all.py --llm-provider codex-cli
 ```
 
 Live mode requires the `codex` CLI to be authenticated (`codex login`).
@@ -60,17 +60,13 @@ Estimated cost: $30-50 in API credits. Wall-clock: ~10 hr.
 
 ## Compare + plot
 
-After all 5 variants complete:
-
-```bash
-python examples/03_berlin_replication/compare_and_plot.py
-```
-
-Produces:
-- `output/comparison/comparison_moments.csv` — cross-version moments table
-- `output/comparison/berlin_q_observed_and_log_change.png` — choropleth
-- `output/comparison/berlin_w_observed_and_log_change.png` — choropleth
-- `output/comparison/llm_abm_satisfaction.csv` — V5 self-rating sidebar
+Each variant's `output/{variant}/per_zone.csv` and
+`output/{variant}_shock_east_west/per_zone.csv` contain the per-zone
+sim/obs values for cross-variant analysis. The paper's headline
+moments table and choropleths are reproduced in `figures/` of this
+repo (`comparison_moments.csv`, `berlin_dlogQ.png`, `berlin_dlogW.png`)
+and bundled in the README. Custom analyses can be built directly off
+the `per_zone.csv` outputs using pandas/matplotlib.
 
 ## Numerical reproducibility
 

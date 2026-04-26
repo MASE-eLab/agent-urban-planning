@@ -98,16 +98,47 @@ Full table + interpretation: [`figures/comparison_moments.csv`](figures/comparis
 
 The full paper §6 discusses why LLM-ABM diverges (gradient-flattening + agglomeration, both forbidden in exogenous-productivity structural models).
 
-## Reproducibility tiers
+## Reproduce the paper results
 
-| Tier | What | Wall-clock | Prerequisites |
+The paper's V1–V5 Berlin runs (baseline + East-West Express shock) reproduce end-to-end from a `git clone`. Pick a path:
+
+```bash
+git clone https://github.com/MASE-eLab/agent-urban-planning.git
+cd agent-urban-planning
+pip install -e ".[llm,plot,berlin]"
+
+# Tier 1+2 — quickstart smoke test (<10 s, no data needed)
+python examples/01_quickstart_two_zone.py
+
+# Tier 3 — V1/V2/V3 closed-form + ABM variants (~3 hr each, no LLM credits)
+python examples/02_berlin_replication/run_v1_softmax.py
+python examples/02_berlin_replication/run_v2_argmax_frechet.py
+python examples/02_berlin_replication/run_v3_argmax_normal.py
+
+# Tier 3d — V4 hybrid (~3 hr, ~$5 in LLM credits)
+python examples/02_berlin_replication/run_v4_hybrid.py --llm-provider codex-cli
+
+# Tier 4 — V5 LLM-ABM, paper headline. Two paths:
+#   Path A: replay the bundled cache (~5–10 min, no credits, recommended for reviewers)
+curl -L -o llm_cache_v5.tar.gz \
+  https://github.com/MASE-eLab/agent-urban-planning/releases/download/v0.1.0-data/llm_cache_v5.tar.gz
+tar -xzf llm_cache_v5.tar.gz -C data/berlin/
+python examples/02_berlin_replication/run_v5_score_all.py --no-llm
+
+#   Path B: rerun from scratch with live LLM (~10 hr, ~$30–50 credits)
+python examples/02_berlin_replication/run_v5_score_all.py --llm-provider codex-cli
+```
+
+| Tier | What | Wall-clock | LLM credits |
 |---|---|---|---|
-| **1** | `pip install agent-urban-planning` + `import` | <30 s | Python 3.9+ |
-| **2** | `examples/01_quickstart_two_zone.py` | <10 s | Tier 1 |
-| **3** | `examples/03_berlin_replication/run_v1_softmax.py` | ~3 hr | Tier 2 + bundled Berlin data (in git, see `data/README.md`) |
-| **4** | `examples/03_berlin_replication/run_v5_score_all.py` | ~10 hr | Tier 3 + LLM provider credits |
+| **1** | `pip install` + `import agent_urban_planning` | <30 s | No |
+| **2** | `examples/01_quickstart_two_zone.py` | <10 s | No |
+| **3a-c** | V1, V2, V3 Berlin baseline + shock | ~3 hr each | No |
+| **3d** | V4 Berlin baseline + shock (hybrid) | ~3 hr | ~$5 |
+| **4** | V5 Berlin baseline + shock (cache replay) | ~5–10 min | No |
+| **4** | V5 Berlin baseline + shock (live LLM) | ~10 hr | ~$30–50 |
 
-See [`docs/reproducibility/berlin_v1_v5.md`](docs/reproducibility/berlin_v1_v5.md) for full details.
+**Detailed instructions** (real-run params, smoke testing, all 6 LLM provider options, cross-variant analysis snippets, numerical-reproducibility expectations) are in [`examples/02_berlin_replication/README.md`](examples/02_berlin_replication/README.md). The full reproducibility tier ladder lives at [`docs/reproducibility/berlin_v1_v5.md`](docs/reproducibility/berlin_v1_v5.md) (also rendered at <https://agent-urban-planning.readthedocs.io/en/latest/reproducibility/berlin_v1_v5.html>).
 
 ## Documentation
 
@@ -128,7 +159,7 @@ agent-urban-planning/
 │   └── research/                   Paper-specific helpers (Berlin)
 ├── examples/
 │   ├── 01_quickstart_two_zone.py   All 5 variants in <60 LOC, <10s wall-clock
-│   └── 03_berlin_replication/      End-to-end V1–V5 Berlin runs
+│   └── 02_berlin_replication/      End-to-end V1–V5 Berlin runs
 ├── data/                           Bundled Berlin + Singapore data (git, not PyPI sdist)
 ├── docs/                           Sphinx documentation source
 ├── figures/                        README assets (workflow, choropleths, tables)

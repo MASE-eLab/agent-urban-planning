@@ -20,7 +20,7 @@ Initial public release accompanying the NeurIPS Datasets & Benchmarks 2026 submi
 - Bundled Singapore + Berlin builtin scenarios (Berlin Ortsteile NPZ files in repo, excluded from PyPI sdist).
 - Sphinx + Furo + 11-extension API documentation hosted on ReadTheDocs.
 - 4 tutorials: quickstart, custom decision engine, full LLM V5, Berlin replication.
-- 5 Berlin V1-V5 reproduction scripts under `examples/03_berlin_replication/`.
+- 5 Berlin V1-V5 reproduction scripts under `examples/02_berlin_replication/`.
 - Reproducibility tier documentation (Tier 1-4).
 - MIT license, CITATION.cff, GitHub Actions CI / docs build / PyPI publish workflows.
 

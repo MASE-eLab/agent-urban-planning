@@ -11,7 +11,7 @@ configurable via the kwargs documented at:
     https://agent-urban-planning.readthedocs.io/api/index.html
 
 V4 (HybridDecisionEngine) requires a pre-built LLM elicitor — see the
-end-to-end Berlin reproduction at ``examples/03_berlin_replication/``.
+end-to-end Berlin reproduction at ``examples/02_berlin_replication/``.
 """
 from __future__ import annotations
 
@@ -69,8 +69,8 @@ def main() -> int:
         print(f"  {label}: {engine!r}")
     print()
     print("V1, V2, V3, V5 paper variants instantiated successfully.")
-    print("V4 requires a pre-built LLM elicitor — see examples/03_berlin_replication/run_v4_hybrid.py.")
-    print("For end-to-end Berlin reproduction, see examples/03_berlin_replication/.")
+    print("V4 requires a pre-built LLM elicitor — see examples/02_berlin_replication/run_v4_hybrid.py.")
+    print("For end-to-end Berlin reproduction, see examples/02_berlin_replication/.")
     return 0
 
 
