@@ -290,6 +290,172 @@ class ClaudeCodeClient:
         return (result.stdout or "").strip()
 
 
+class AnthropicClient:
+    """Direct Anthropic SDK adapter implementing the :class:`LLMClient` protocol.
+
+    Wraps the official ``anthropic`` Python SDK so any class that accepts
+    an :class:`LLMClient` (e.g., :class:`agent_urban_planning.LLMDecisionEngine`,
+    :class:`LLMPreferenceElicitor`) can use Anthropic's hosted Claude
+    models directly via the API. Authentication uses the standard
+    ``ANTHROPIC_API_KEY`` environment variable handled by the SDK.
+
+    Args:
+        model: Anthropic model identifier. Defaults to
+            ``claude-haiku-4-5-20251001`` (fast + cheap, matches the
+            decision-loop latency profile).
+        api_key: Optional explicit API key. If ``None``, the SDK reads
+            ``ANTHROPIC_API_KEY`` from the environment.
+        max_tokens: Per-call output token cap. Default 500 — enough for
+            JSON responses from the hierarchical prompts; raise if you
+            override the prompt builder to expect longer outputs.
+
+    Raises:
+        ImportError: If the ``anthropic`` SDK is not installed. Install
+            with ``pip install "agent-urban-planning[llm]"`` or
+            ``pip install anthropic``.
+
+    Examples:
+        Reproducing V5 with the Anthropic SDK::
+
+            >>> import agent_urban_planning as aup
+            >>> client = aup.llm.AnthropicClient(model="claude-haiku-4-5-20251001")
+            >>> # engine = aup.LLMDecisionEngine(params, llm_client=client, ...)
+
+    See Also:
+        :class:`ClaudeCodeClient` — uses the local ``claude`` CLI's OAuth
+        flow instead of an API key (no per-token billing on Pro plans).
+        :class:`ZaiCodingClient` — Anthropic-compatible Z.ai proxy.
+    """
+
+    DEFAULT_MODEL = "claude-haiku-4-5-20251001"
+
+    def __init__(
+        self,
+        model: Optional[str] = None,
+        api_key: Optional[str] = None,
+        max_tokens: int = 500,
+    ):
+        try:
+            import anthropic
+        except ImportError as exc:
+            raise ImportError(
+                "anthropic SDK is required for AnthropicClient. "
+                "Install with: pip install \"agent-urban-planning[llm]\""
+            ) from exc
+
+        self.model = model or os.environ.get("ANTHROPIC_MODEL", self.DEFAULT_MODEL)
+        self.max_tokens = int(max_tokens)
+        self.client = anthropic.Anthropic(api_key=api_key) if api_key else anthropic.Anthropic()
+
+    def complete(self, prompt: str, system: str = "") -> str:
+        """Send a prompt to Anthropic's API and return the assistant's text reply.
+
+        Args:
+            prompt: The user-turn prompt.
+            system: Optional system message. Empty string means no system
+                message is sent.
+
+        Returns:
+            The assistant's response text from the first content block.
+
+        Examples:
+            >>> # client = AnthropicClient()
+            >>> # client.complete("Reply with the word 'pong'.")
+            'pong'
+        """
+        kwargs = {
+            "model": self.model,
+            "max_tokens": self.max_tokens,
+            "messages": [{"role": "user", "content": prompt}],
+        }
+        if system:
+            kwargs["system"] = system
+        msg = self.client.messages.create(**kwargs)
+        return msg.content[0].text
+
+
+class OpenAIClient:
+    """Direct OpenAI SDK adapter implementing the :class:`LLMClient` protocol.
+
+    Wraps the official ``openai`` Python SDK so any class that accepts an
+    :class:`LLMClient` (e.g., :class:`agent_urban_planning.LLMDecisionEngine`,
+    :class:`LLMPreferenceElicitor`) can use OpenAI's hosted models
+    directly via the Chat Completions API. Authentication uses the
+    standard ``OPENAI_API_KEY`` environment variable handled by the SDK.
+
+    Args:
+        model: OpenAI model identifier. Defaults to ``gpt-4o-mini``
+            (fast + cheap; appropriate for the V5 decision loop's
+            latency profile).
+        api_key: Optional explicit API key. If ``None``, the SDK reads
+            ``OPENAI_API_KEY`` from the environment.
+        max_tokens: Per-call output token cap. Default 500.
+
+    Raises:
+        ImportError: If the ``openai`` SDK is not installed. Install with
+            ``pip install "agent-urban-planning[llm]"`` or
+            ``pip install openai``.
+
+    Examples:
+        Reproducing V5 with the OpenAI SDK::
+
+            >>> import agent_urban_planning as aup
+            >>> client = aup.llm.OpenAIClient(model="gpt-4o-mini")
+            >>> # engine = aup.LLMDecisionEngine(params, llm_client=client, ...)
+
+    See Also:
+        :class:`CodexCliClient` — uses the local ``codex`` CLI's OAuth
+        flow instead of an API key (works on the Codex Coding Plan).
+    """
+
+    DEFAULT_MODEL = "gpt-4o-mini"
+
+    def __init__(
+        self,
+        model: Optional[str] = None,
+        api_key: Optional[str] = None,
+        max_tokens: int = 500,
+    ):
+        try:
+            import openai
+        except ImportError as exc:
+            raise ImportError(
+                "openai SDK is required for OpenAIClient. "
+                "Install with: pip install \"agent-urban-planning[llm]\""
+            ) from exc
+
+        self.model = model or os.environ.get("OPENAI_MODEL", self.DEFAULT_MODEL)
+        self.max_tokens = int(max_tokens)
+        self.client = openai.OpenAI(api_key=api_key) if api_key else openai.OpenAI()
+
+    def complete(self, prompt: str, system: str = "") -> str:
+        """Send a prompt to OpenAI's Chat Completions API and return the reply text.
+
+        Args:
+            prompt: The user-turn prompt.
+            system: Optional system message. Empty string means no system
+                message is sent (the SDK accepts a single user message).
+
+        Returns:
+            The assistant's response text from the first choice.
+
+        Examples:
+            >>> # client = OpenAIClient()
+            >>> # client.complete("Reply with the word 'pong'.")
+            'pong'
+        """
+        messages = []
+        if system:
+            messages.append({"role": "system", "content": system})
+        messages.append({"role": "user", "content": prompt})
+        resp = self.client.chat.completions.create(
+            model=self.model,
+            max_tokens=self.max_tokens,
+            messages=messages,
+        )
+        return resp.choices[0].message.content or ""
+
+
 class MultiProviderClient:
     """Load-balancing LLM client that fans out across multiple sub-clients.
 

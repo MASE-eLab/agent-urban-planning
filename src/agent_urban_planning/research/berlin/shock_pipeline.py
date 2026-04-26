@@ -130,7 +130,18 @@ def run_shock_pipeline(
           f"intra={shock_cfg.intra_station_min} min", flush=True)
 
     # ---- Build engine (variant-specific) + SimulationEngine ------------
-    engine = engine_factory(sc, seed, iters)
+    # Phase-aware factory call so V5 can route per-phase cache dirs.
+    import inspect
+    try:
+        _sig = inspect.signature(engine_factory)
+        if "phase" in _sig.parameters or any(
+            p.kind == inspect.Parameter.VAR_KEYWORD for p in _sig.parameters.values()
+        ):
+            engine = engine_factory(sc, seed, iters, phase="shock")
+        else:
+            engine = engine_factory(sc, seed, iters)
+    except (TypeError, ValueError):
+        engine = engine_factory(sc, seed, iters)
     eng = SimulationEngine(
         scenario=sc, agent_config=ag, engine=engine,
         seed=seed, verbose=False,

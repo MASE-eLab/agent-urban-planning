@@ -47,7 +47,19 @@ NPZs to `data/berlin/blocks/`.
 ### V5 LLM cache (`berlin/llm_cache_v5/`)
 
 The bundled cache from the paper's V5 score-all-96 baseline + shock
-runs is **~320 MB** — too large for git. Three options:
+runs is **~320 MB raw / ~15 MB compressed** — too large for git, but
+distributed as a GitHub release asset.
+
+The cache is split by phase (baseline vs shock) to prevent
+hash collisions between prompts that share warm-start price buckets:
+
+```
+data/berlin/llm_cache_v5/
+├── baseline/   (54,674 JSON files, 214 MB raw)
+└── shock/      (26,950 JSON files, 105 MB raw)
+```
+
+Three options:
 
 1. **Live LLM run**: configure a provider (`codex-cli` recommended)
    and rerun:
@@ -58,20 +70,22 @@ runs is **~320 MB** — too large for git. Three options:
    ```
 
    Wall-clock ~10 hours, requires LLM credits (~$30-50 for codex-cli).
-   The first run populates `data/berlin/llm_cache_v5/`; subsequent
-   runs at the same seed reuse the cache and finish in minutes.
+   The first run populates `data/berlin/llm_cache_v5/{baseline,shock}/`;
+   subsequent runs at the same seed reuse the cache and finish in
+   minutes.
 
-2. **External release artifact (TBD)**: we plan to attach the cache
-   bundle as a GitHub release asset for v0.1.0; check the
-   [Releases page](https://github.com/MASE-eLab/agent-urban-planning/releases).
-   Once available, download to `data/berlin/llm_cache_v5/`:
+2. **Download the bundled cache** (recommended for reviewers):
 
    ```bash
-   mkdir -p data/berlin/llm_cache_v5
-   curl -L https://github.com/MASE-eLab/agent-urban-planning/releases/download/v0.1.0/llm_cache_v5.tar.gz \
-     | tar -xz -C data/berlin/llm_cache_v5/
+   curl -L -o llm_cache_v5.tar.gz \
+     https://github.com/MASE-eLab/agent-urban-planning/releases/download/v0.1.0-data/llm_cache_v5.tar.gz
+   tar -xzf llm_cache_v5.tar.gz -C data/berlin/
    python examples/03_berlin_replication/run_v5_score_all.py --no-llm
    ```
+
+   The tarball extracts to `data/berlin/llm_cache_v5/{baseline,shock}/`.
+   `--no-llm` mode runs at paper config (cluster_k=50, num_agents=1M,
+   iters=50) and replays cached LLM responses; wall-clock ~5-10 min.
 
 3. **Smoke test only**: run with the bundled stub LLM client
    (returns uniform-score responses; not paper-faithful but exercises

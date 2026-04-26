@@ -51,15 +51,9 @@ def _build_elicitor(provider: str, cache_dir: Path) -> LLMPreferenceElicitor:
     elif provider == "zai-coding":
         client = _clients.ZaiCodingClient()
     elif provider == "anthropic":
-        raise NotImplementedError(
-            "anthropic SDK provider not yet wired in the public library; "
-            "use codex-cli, claude-code, zai-coding, or stub-uniform."
-        )
+        client = _clients.AnthropicClient()
     elif provider == "openai":
-        raise NotImplementedError(
-            "openai SDK provider not yet wired in the public library; "
-            "use codex-cli, claude-code, zai-coding, or stub-uniform."
-        )
+        client = _clients.OpenAIClient()
     else:
         raise ValueError(f"Unknown provider: {provider}")
     return LLMPreferenceElicitor(client, cache_dir=str(cache_dir))

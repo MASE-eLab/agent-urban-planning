@@ -66,7 +66,7 @@ def check_berlin_data_present() -> None:
 
 def _run_baseline(
     *,
-    engine_factory: Callable[[Any, int, int], Any],
+    engine_factory: Callable[..., Any],
     output_dir: Path,
     variant_name: str,
     seed: int,
@@ -98,7 +98,7 @@ def _run_baseline(
     L_total = apply_pack_L_override(sc, root, unit)
     print(f"[{variant_name}] L = V × K^0.75 applied, Σ = {L_total:.0f}", flush=True)
 
-    engine = engine_factory(sc, seed, iters)
+    engine = _call_engine_factory(engine_factory, sc, seed, iters, phase="baseline")
     eng = SimulationEngine(
         scenario=sc, agent_config=ag, engine=engine,
         seed=seed, verbose=False,
@@ -151,8 +151,28 @@ def _run_baseline(
     return output_dir
 
 
+def _call_engine_factory(engine_factory, sc, seed, iters, *, phase):
+    """Invoke ``engine_factory`` with optional phase awareness.
+
+    Older factories take ``(sc, seed, iters)``; newer ones can opt into a
+    ``phase="baseline"`` / ``"shock"`` keyword for cache isolation. We
+    introspect the signature so V1/V2/V3 factories continue to work
+    unchanged while V5 can route per-phase cache dirs.
+    """
+    import inspect
+    try:
+        sig = inspect.signature(engine_factory)
+        if "phase" in sig.parameters or any(
+            p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()
+        ):
+            return engine_factory(sc, seed, iters, phase=phase)
+    except (TypeError, ValueError):
+        pass
+    return engine_factory(sc, seed, iters)
+
+
 def run_baseline_and_shock(
-    engine_factory: Callable[[Any, int, int], Any],
+    engine_factory: Callable[..., Any],
     output_subdir: str,
     *,
     iters: int = 50,

@@ -3,6 +3,8 @@
 Concrete clients ship with the package:
   * :class:`CodexCliClient` — wraps the local ``codex`` CLI subprocess.
   * :class:`ClaudeCodeClient` — wraps the local ``claude`` CLI subprocess.
+  * :class:`AnthropicClient` — direct Anthropic SDK (uses ``ANTHROPIC_API_KEY``).
+  * :class:`OpenAIClient` — direct OpenAI SDK (uses ``OPENAI_API_KEY``).
   * :class:`ZaiCodingClient` — Anthropic-compatible Z.ai proxy.
   * :class:`MultiProviderClient` — round-robin / failover composition.
   * :class:`RetryingClient` — wraps any client with retry logic.
@@ -23,6 +25,7 @@ from __future__ import annotations
 from agent_urban_planning.llm.async_client import AsyncLLMClient
 from agent_urban_planning.llm.cache import LLMCallCache
 from agent_urban_planning.llm.clients import (
+    AnthropicClient,
     ClaudeCodeClient,
     CodexCliClient,
     LLMClient,
@@ -30,11 +33,13 @@ from agent_urban_planning.llm.clients import (
     LLMEngine,
     LLMPreferenceElicitor,
     MultiProviderClient,
+    OpenAIClient,
     RetryingClient,
     ZaiCodingClient,
 )
 
 __all__ = [
+    "AnthropicClient",
     "AsyncLLMClient",
     "ClaudeCodeClient",
     "CodexCliClient",
@@ -44,6 +49,7 @@ __all__ = [
     "LLMEngine",
     "LLMPreferenceElicitor",
     "MultiProviderClient",
+    "OpenAIClient",
     "RetryingClient",
     "ZaiCodingClient",
 ]
