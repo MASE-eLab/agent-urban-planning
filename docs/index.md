@@ -9,8 +9,8 @@ NeurIPS Datasets & Benchmarks 2026 paper.
 :link: tutorials/01_quickstart
 :link-type: doc
 
-`pip install agent-urban-planning` and run a 5-variant smoke test in
-under 10 seconds.
+`pip install agent-urban-planning` and run the V1 pipeline walkthrough
+in under a minute.
 :::
 
 :::{grid-item-card} 📊 Berlin replication

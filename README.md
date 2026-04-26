@@ -30,35 +30,34 @@ A modular ABM framework for simulating spatial-equilibrium urban policies. Five 
 ## Quickstart
 
 ```bash
-pip install agent-urban-planning
+git clone https://github.com/MASE-eLab/agent-urban-planning.git
+cd agent-urban-planning
+pip install -e ".[llm,plot,berlin]"
+python examples/01_quickstart.py
 ```
+
+The quickstart script walks through the five-stage pipeline (Environment → Agents → Decision → Market → Equilibrium) and runs a baseline simulation with V1 (closed-form softmax). Wall-clock <1 minute, no LLM credits required.
 
 ```python
 import agent_urban_planning as aup
-from agent_urban_planning.data.loaders import AhlfeldtParams
+from agent_urban_planning.data.loaders import load_scenario, load_agents
 
-# Ahlfeldt (2015) Berlin structural parameters.
-params = AhlfeldtParams(
-    kappa_eps=0.0987, epsilon=6.6941,
-    lambda_=0.071, delta=0.362,
-    eta=0.155, rho=0.759,
-)
+# Stage 1+2 — Environment + Agents
+scenario = load_scenario("data/berlin/scenarios/berlin_2006_ortsteile.yaml")
+agent_config = load_agents("data/berlin/agents/berlin_ortsteile_richer_10k.yaml")
 
-# V1 — closed-form softmax (deterministic).
-v1 = aup.UtilityEngine(params, mode="softmax")
+# Stage 3 — Decision engine (V1; swap to V2/V3/V4/V5 with one constructor change)
+engine = aup.UtilityEngine(scenario.ahlfeldt_params, mode="softmax")
 
-# V5 — full LLM-as-decision-maker (paper headline).
-v5 = aup.LLMDecisionEngine(
-    params,
-    llm_client=...,                     # any OpenAI-compatible client
-    response_format="score_all",
-    rebalance_instruction=True,
-    stage2_top_k_residences=10,
-    num_agents=10, batch_size=10, seed=42, cluster_k=2,
-)
+# Stage 4 — SimulationEngine + market clearing (Stage 5 = result.metrics)
+sim = aup.SimulationEngine(scenario=scenario, agent_config=agent_config,
+                           engine=engine, seed=42)
+result = sim.run(policy=None)
+
+print(result.metrics.avg_utility, result.metrics.gini_coefficient)
 ```
 
-End-to-end runnable script: [`examples/01_quickstart_two_zone.py`](examples/01_quickstart_two_zone.py) — instantiates all five variants in <10 seconds.
+The other 4 paper variants (V2, V3, V4, V5) swap only the decision engine — see the variant table below.
 
 ## Berlin replication results
 
@@ -107,8 +106,8 @@ git clone https://github.com/MASE-eLab/agent-urban-planning.git
 cd agent-urban-planning
 pip install -e ".[llm,plot,berlin]"
 
-# Tier 1+2 — quickstart smoke test (<10 s, no data needed)
-python examples/01_quickstart_two_zone.py
+# Tier 1+2 — quickstart pipeline walkthrough (<1 min, V1 baseline only)
+python examples/01_quickstart.py
 
 # Tier 3 — V1/V2/V3 closed-form + ABM variants (~3 hr each, no LLM credits)
 python examples/02_berlin_replication/run_v1_softmax.py
@@ -132,7 +131,7 @@ python examples/02_berlin_replication/run_v5_score_all.py --llm-provider codex-c
 | Tier | What | Wall-clock | LLM credits |
 |---|---|---|---|
 | **1** | `pip install` + `import agent_urban_planning` | <30 s | No |
-| **2** | `examples/01_quickstart_two_zone.py` | <10 s | No |
+| **2** | `examples/01_quickstart.py` | <10 s | No |
 | **3a-c** | V1, V2, V3 Berlin baseline + shock | ~3 hr each | No |
 | **3d** | V4 Berlin baseline + shock (hybrid) | ~3 hr | ~$5 |
 | **4** | V5 Berlin baseline + shock (cache replay) | ~5–10 min | No |
@@ -158,7 +157,7 @@ agent-urban-planning/
 │   ├── llm/                        LLM client wrappers
 │   └── research/                   Paper-specific helpers (Berlin)
 ├── examples/
-│   ├── 01_quickstart_two_zone.py   All 5 variants in <60 LOC, <10s wall-clock
+│   ├── 01_quickstart.py   Full V1 pipeline walkthrough (<1 min)
 │   └── 02_berlin_replication/      End-to-end V1–V5 Berlin runs
 ├── data/                           Bundled Berlin + Singapore data (git, not PyPI sdist)
 ├── docs/                           Sphinx documentation source

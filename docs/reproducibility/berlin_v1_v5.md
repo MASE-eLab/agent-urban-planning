@@ -17,9 +17,9 @@ synthetic 96-zone Berlin scenario.
   - <30 s
   - Python 3.9+
 * - **Tier 2**
-  - `python examples/01_quickstart_two_zone.py` (5-variant smoke test)
-  - <10 s
-  - Tier 1
+  - `python examples/01_quickstart.py` (full V1 pipeline walkthrough)
+  - <1 min
+  - Tier 1 + bundled scenario YAML (in git, not PyPI)
 * - **Tier 3a**
   - V1 baseline + shock
   - ~3 hr
@@ -51,11 +51,13 @@ python -c "import agent_urban_planning as aup; print(aup.__version__)"
 # → 0.1.0
 ```
 
-### Tier 2: Smoke test (no data needed)
+### Tier 2: Pipeline walkthrough (needs bundled scenario YAML)
 ```bash
-python examples/01_quickstart_two_zone.py
+python examples/01_quickstart.py
 ```
-Should print all 5 paper variants instantiated successfully.
+Walks through Environment → Agents → Decision → Market → Equilibrium
+for V1 (closed-form softmax). Verifies the install + pipeline wiring
+end-to-end.
 
 ### Tier 3+ requires git clone
 
