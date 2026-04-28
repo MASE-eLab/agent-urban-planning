@@ -6,7 +6,7 @@ End-to-end reproduction of the paper's 5 model variants on the synthetic
 ## Prerequisites
 
 ```bash
-git clone https://github.com/MASE-eLab/agent-urban-planning.git
+git clone https://anonymous.4open.science/r/agent-urban-planning-4B4D.git
 cd agent-urban-planning
 pip install -e ".[llm,plot,berlin]"
 ```

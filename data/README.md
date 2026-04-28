@@ -78,7 +78,7 @@ Three options:
 
    ```bash
    curl -L -o llm_cache_v5.tar.gz \
-     https://github.com/MASE-eLab/agent-urban-planning/releases/download/v0.1.0-data/llm_cache_v5.tar.gz
+     https://anonymous.4open.science/r/agent-urban-planning-4B4D/releases/download/v0.1.0-data/llm_cache_v5.tar.gz
    tar -xzf llm_cache_v5.tar.gz -C data/berlin/
    python examples/02_berlin_replication/run_v5_score_all.py --no-llm
    ```

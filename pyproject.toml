@@ -80,10 +80,10 @@ all = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/MASE-eLab/agent-urban-planning"
-Documentation = "https://agent-urban-planning.readthedocs.io"
-Repository = "https://github.com/MASE-eLab/agent-urban-planning"
-Issues = "https://github.com/MASE-eLab/agent-urban-planning/issues"
+Homepage = "https://anonymous.4open.science/r/agent-urban-planning-4B4D"
+Documentation = "https://anonymous.4open.science/r/agent-urban-planning-4B4D"
+Repository = "https://anonymous.4open.science/r/agent-urban-planning-4B4D"
+Issues = "https://anonymous.4open.science/r/agent-urban-planning-4B4D"
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -20,7 +20,7 @@ shock runs) per directory for reproducibility metadata.
 ## Prerequisites
 
 ```bash
-git clone https://github.com/MASE-eLab/agent-urban-planning.git
+git clone https://anonymous.4open.science/r/agent-urban-planning-4B4D.git
 cd agent-urban-planning
 pip install -e ".[llm,plot,berlin]"
 ```
@@ -121,7 +121,7 @@ Use the bundled LLM-response cache hosted as a GitHub release asset:
 ```bash
 # 1. Download + extract the cache (one-time, 15 MB compressed → 320 MB raw)
 curl -L -o llm_cache_v5.tar.gz \
-  https://github.com/MASE-eLab/agent-urban-planning/releases/download/v0.1.0-data/llm_cache_v5.tar.gz
+  https://anonymous.4open.science/r/agent-urban-planning-4B4D/releases/download/v0.1.0-data/llm_cache_v5.tar.gz
 tar -xzf llm_cache_v5.tar.gz -C data/berlin/
 
 # 2. Run V5 with cache replay
@@ -241,7 +241,7 @@ All scripts share the same structure (defined in `_common.py`):
 ## See also
 
 - `docs/reproducibility/berlin_v1_v5.md` — full reproducibility tier
-  ladder (rendered at <https://agent-urban-planning.readthedocs.io>)
+  ladder (rendered at <https://anonymous.4open.science/r/agent-urban-planning-4B4D>)
 - `docs/reproducibility/shock_analysis.md` — East-West Express
   shock methodology + Route-C min-of-paths formula
 - `data/README.md` — bundled-data inventory + V5 cache release-asset

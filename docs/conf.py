@@ -50,13 +50,13 @@ html_static_path: list[str] = []  # add when we have logos/CSS overrides
 html_theme_options = {
     "sidebar_hide_name": False,
     "navigation_with_keys": True,
-    "source_repository": "https://github.com/MASE-eLab/agent-urban-planning/",
+    "source_repository": "https://anonymous.4open.science/r/agent-urban-planning-4B4D/",
     "source_branch": "main",
     "source_directory": "docs/",
     "footer_icons": [
         {
             "name": "GitHub",
-            "url": "https://github.com/MASE-eLab/agent-urban-planning",
+            "url": "https://anonymous.4open.science/r/agent-urban-planning-4B4D",
             "html": "",
             "class": "fa-brands fa-github",
         },

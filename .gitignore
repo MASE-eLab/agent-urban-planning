@@ -37,8 +37,12 @@ docs/api/_autosummary/
 output/
 .cache/
 
-# V5 LLM cache (320 MB; hosted as GitHub release asset, not in git)
-data/berlin/llm_cache_v5/
+# V5 LLM cache (320 MB across 80K+ JSON files; distributed as a tarball,
+# not tracked in git). The croissant.json metadata file and the README.md
+# documenting the extraction step are tracked.
+data/berlin/llm_cache_v5/*
+!data/berlin/llm_cache_v5/croissant.json
+!data/berlin/llm_cache_v5/README.md
 
 # Coverage
 .coverage

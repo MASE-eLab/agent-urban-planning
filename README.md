@@ -1,9 +1,9 @@
 # agent-urban-planning
 
-[![PyPI](https://img.shields.io/pypi/v/agent-urban-planning.svg)](https://pypi.org/project/agent-urban-planning/)
-[![Documentation Status](https://readthedocs.org/projects/agent-urban-planning/badge/?version=latest)](https://agent-urban-planning.readthedocs.io)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org)
+
+> **Anonymized for double-blind review.** Repository, documentation, and PyPI distribution URLs in this README have been replaced with the anonymized mirror at <https://anonymous.4open.science/r/agent-urban-planning-4B4D>. Public hosting URLs will be restored in the camera-ready version.
 
 Open-source Python library for **agent-based urban planning simulation** with closed-form, hybrid, and full-LLM decision engines. Companion to the NeurIPS Datasets & Benchmarks 2026 paper:
 
@@ -30,7 +30,7 @@ A modular ABM framework for simulating spatial-equilibrium urban policies. Five 
 ## Quickstart
 
 ```bash
-git clone https://github.com/MASE-eLab/agent-urban-planning.git
+git clone https://anonymous.4open.science/r/agent-urban-planning-4B4D.git
 cd agent-urban-planning
 pip install -e ".[llm,plot,berlin]"
 python examples/01_quickstart.py
@@ -102,7 +102,7 @@ The full paper §6 discusses why LLM-ABM diverges (gradient-flattening + agglome
 The paper's V1–V5 Berlin runs (baseline + East-West Express shock) reproduce end-to-end from a `git clone`. Pick a path:
 
 ```bash
-git clone https://github.com/MASE-eLab/agent-urban-planning.git
+git clone https://anonymous.4open.science/r/agent-urban-planning-4B4D.git
 cd agent-urban-planning
 pip install -e ".[llm,plot,berlin]"
 
@@ -120,7 +120,7 @@ python examples/02_berlin_replication/run_v4_hybrid.py --llm-provider codex-cli
 # Tier 4 — V5 LLM-ABM, paper headline. Two paths:
 #   Path A: replay the bundled cache (~5–10 min, no credits, recommended for reviewers)
 curl -L -o llm_cache_v5.tar.gz \
-  https://github.com/MASE-eLab/agent-urban-planning/releases/download/v0.1.0-data/llm_cache_v5.tar.gz
+  https://anonymous.4open.science/r/agent-urban-planning-4B4D/releases/download/v0.1.0-data/llm_cache_v5.tar.gz
 tar -xzf llm_cache_v5.tar.gz -C data/berlin/
 python examples/02_berlin_replication/run_v5_score_all.py --no-llm
 
@@ -137,13 +137,13 @@ python examples/02_berlin_replication/run_v5_score_all.py --llm-provider codex-c
 | **4** | V5 Berlin baseline + shock (cache replay) | ~5–10 min | No |
 | **4** | V5 Berlin baseline + shock (live LLM) | ~10 hr | ~$30–50 |
 
-**Detailed instructions** (real-run params, smoke testing, all 6 LLM provider options, cross-variant analysis snippets, numerical-reproducibility expectations) are in [`examples/02_berlin_replication/README.md`](examples/02_berlin_replication/README.md). The full reproducibility tier ladder lives at [`docs/reproducibility/berlin_v1_v5.md`](docs/reproducibility/berlin_v1_v5.md) (also rendered at <https://agent-urban-planning.readthedocs.io/en/latest/reproducibility/berlin_v1_v5.html>).
+**Detailed instructions** (real-run params, smoke testing, all 6 LLM provider options, cross-variant analysis snippets, numerical-reproducibility expectations) are in [`examples/02_berlin_replication/README.md`](examples/02_berlin_replication/README.md). The full reproducibility tier ladder lives at [`docs/reproducibility/berlin_v1_v5.md`](docs/reproducibility/berlin_v1_v5.md) (also rendered at <https://anonymous.4open.science/r/agent-urban-planning-4B4D/en/latest/reproducibility/berlin_v1_v5.html>).
 
 ## Documentation
 
 Comprehensive API reference, tutorials, and concept guides:
 
-→ <https://agent-urban-planning.readthedocs.io>
+→ <https://anonymous.4open.science/r/agent-urban-planning-4B4D>
 
 ## Repository layout
 

@@ -65,7 +65,7 @@ The bundled Berlin Ortsteile NPZ files are git-only (excluded from PyPI
 sdist). Tier 3 and Tier 4 require:
 
 ```bash
-git clone https://github.com/MASE-eLab/agent-urban-planning.git
+git clone https://anonymous.4open.science/r/agent-urban-planning-4B4D.git
 cd agent-urban-planning
 pip install -e ".[llm,plot,berlin]"
 ```

@@ -13,7 +13,7 @@ Quickstart::
     sim = aup.SimulationEngine(scenario=scenario, agent_config=agents, engine=engine)
     results = sim.run(policy=None)
 
-See the documentation at https://agent-urban-planning.readthedocs.io for full API
+See the documentation at https://anonymous.4open.science/r/agent-urban-planning-4B4D for full API
 reference, tutorials, and reproducibility instructions for the paper's V1-V5
 results.
 """

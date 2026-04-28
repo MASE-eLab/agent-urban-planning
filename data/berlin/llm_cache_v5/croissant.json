@@ -1,0 +1,141 @@
+{
+  "@context": {
+    "@language": "en",
+    "@vocab": "https://schema.org/",
+    "citeAs": "cr:citeAs",
+    "column": "cr:column",
+    "conformsTo": "dct:conformsTo",
+    "cr": "http://mlcommons.org/croissant/",
+    "rai": "http://mlcommons.org/croissant/RAI/",
+    "data": {"@id": "cr:data", "@type": "@json"},
+    "dataType": {"@id": "cr:dataType", "@type": "@vocab"},
+    "dct": "http://purl.org/dc/terms/",
+    "examples": {"@id": "cr:examples", "@type": "@json"},
+    "extract": "cr:extract",
+    "field": "cr:field",
+    "fileObject": "cr:fileObject",
+    "fileSet": "cr:fileSet",
+    "format": "cr:format",
+    "includes": "cr:includes",
+    "isLiveDataset": "cr:isLiveDataset",
+    "jsonPath": "cr:jsonPath",
+    "key": "cr:key",
+    "md5": "cr:md5",
+    "parentField": "cr:parentField",
+    "path": "cr:path",
+    "recordSet": "cr:recordSet",
+    "references": "cr:references",
+    "regex": "cr:regex",
+    "repeated": "cr:repeated",
+    "replace": "cr:replace",
+    "sc": "https://schema.org/",
+    "separator": "cr:separator",
+    "source": "cr:source",
+    "subField": "cr:subField",
+    "transform": "cr:transform"
+  },
+  "@type": "sc:Dataset",
+  "conformsTo": "http://mlcommons.org/croissant/1.0",
+  "name": "AUP-V5-LLM-cache-Berlin-Ortsteile",
+  "description": "Bundled prompt-response cache from the V5 (LLM-decide) decision engine on the 96-zone Berlin Ortsteile benchmark instance of the AUP framework. The cache contains 80,124 prompt-response pairs (40,062 baseline + 40,062 shock) generated under temperature 0 against an API-pinned foundation-model snapshot. It enables Tier 4 bit-identical reproduction of the V5 headline numbers in the AUP paper without consuming LLM credits. Each cache entry is a JSON file keyed by <persona-cluster-id>_<iteration>_<stage>.json under the baseline/ and shock/ subdirectories.",
+  "license": "https://creativecommons.org/licenses/by/4.0/",
+  "url": "<release-asset URL TBD at camera-ready>",
+  "version": "0.1.0",
+  "datePublished": "2026-05-06",
+  "creator": {
+    "@type": "Organization",
+    "name": "<anonymized for double-blind review>"
+  },
+  "citeAs": "AUP-Berlin Benchmark V5 LLM Cache, version 0.1.0, 2026.",
+  "keywords": [
+    "spatial equilibrium",
+    "urban planning",
+    "LLM agents",
+    "Berlin",
+    "Ortsteile",
+    "benchmark",
+    "reproducibility cache"
+  ],
+  "rai:dataCollection": "Generated via deterministic prompts (full prompt templates in Appendix C of the AUP paper) against an API-pinned foundation-model snapshot at sampling temperature 0. No human subjects were involved and no third-party data was ingested. Inputs to each prompt are derived from the public Berlin Ortsteile aggregation and the East-West Express tau-shock specification, both of which are bundled with the AUP codebase.",
+  "rai:annotationCollection": "No human annotation. Each cache entry stores the raw structured LLM response, parsed into (residence_zone, workplace_zone) action assignments and a 0-100 self-rated satisfaction score. The parser implementation is in src/simulator/decisions/llm.py of the AUP codebase.",
+  "rai:dataUseCases": "(i) Tier 4 bit-identical reproduction of the AUP-Berlin V5 headline numbers without LLM credits. (ii) Pedagogical illustration of LLM-driven choice-rule behaviour under spatial-equilibrium clearing for graduate coursework. (iii) Comparative analysis with alternative decision engines plugged into the AUP DecisionEngine interface.",
+  "rai:dataLimitations": "Cache entries inherit any biases of the foundation-model snapshot at the time of generation (training-data priors plausibly biased toward Western-metropolis defaults; see Appendix B of the AUP paper). The cache is bit-identical to the underlying snapshot and does not generalise to other foundation models or sampling temperatures.",
+  "distribution": [
+    {
+      "@type": "cr:FileObject",
+      "@id": "berlin-v5-cache-tarball",
+      "name": "berlin_v5_cache_v0.1.0.tar.zst",
+      "description": "Compressed tarball of the V5 LLM cache. Decompresses to roughly 920 MB containing two top-level directories baseline/ and shock/, each holding 40,062 JSON files.",
+      "contentUrl": "<release-asset URL TBD at camera-ready>",
+      "encodingFormat": "application/zstd",
+      "sha256": "<TBD-at-release-time>",
+      "contentSize": "318 MB"
+    }
+  ],
+  "recordSet": [
+    {
+      "@type": "cr:RecordSet",
+      "@id": "cache-entries",
+      "name": "cache-entries",
+      "description": "Per-iteration LLM prompt-response records keyed by persona cluster, market iteration, and decision stage.",
+      "field": [
+        {
+          "@type": "cr:Field",
+          "@id": "cache-entries/condition",
+          "name": "condition",
+          "description": "Either 'baseline' or 'shock'.",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "cache-entries/persona_cluster_id",
+          "name": "persona_cluster_id",
+          "description": "Index of the K=50 demographic cluster (0-49).",
+          "dataType": "sc:Integer"
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "cache-entries/iteration",
+          "name": "iteration",
+          "description": "Tatonnement market iteration index.",
+          "dataType": "sc:Integer"
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "cache-entries/stage",
+          "name": "stage",
+          "description": "Either 'stage1_residence' or 'stage2_workplace'.",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "cache-entries/prompt",
+          "name": "prompt",
+          "description": "Full prompt sent to the foundation model.",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "cache-entries/response",
+          "name": "response",
+          "description": "Raw structured LLM response.",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "cache-entries/parsed_action",
+          "name": "parsed_action",
+          "description": "Parsed (residence_zone, workplace_zone) action pair.",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "cache-entries/satisfaction_score",
+          "name": "satisfaction_score",
+          "description": "LLM-elicited 0-100 self-rated satisfaction score, used as V5's per-agent welfare contribution.",
+          "dataType": "sc:Integer"
+        }
+      ]
+    }
+  ]
+}
