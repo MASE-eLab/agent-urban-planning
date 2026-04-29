@@ -39,7 +39,7 @@
   "name": "AUP-V5-LLM-cache-Berlin-Ortsteile",
   "description": "Bundled prompt-response cache from the V5 (LLM-decide) decision engine on the 96-zone Berlin Ortsteile benchmark instance of the AUP framework. The cache contains 80,124 prompt-response pairs (40,062 baseline + 40,062 shock) generated under temperature 0 against an API-pinned foundation-model snapshot. It enables Tier 4 bit-identical reproduction of the V5 headline numbers in the AUP paper without consuming LLM credits. Each cache entry is a JSON file keyed by <persona-cluster-id>_<iteration>_<stage>.json under the baseline/ and shock/ subdirectories.",
   "license": "https://creativecommons.org/licenses/by/4.0/",
-  "url": "<release-asset URL TBD at camera-ready>",
+  "url": "https://huggingface.co/datasets/aup-anon-2026/AUP-V5-LLM-cache-Berlin-Ortsteile",
   "version": "0.1.0",
   "datePublished": "2026-05-06",
   "creator": {
@@ -64,12 +64,12 @@
     {
       "@type": "cr:FileObject",
       "@id": "berlin-v5-cache-tarball",
-      "name": "berlin_v5_cache_v0.1.0.tar.zst",
-      "description": "Compressed tarball of the V5 LLM cache. Decompresses to roughly 920 MB containing two top-level directories baseline/ and shock/, each holding 40,062 JSON files.",
-      "contentUrl": "<release-asset URL TBD at camera-ready>",
-      "encodingFormat": "application/zstd",
-      "sha256": "<TBD-at-release-time>",
-      "contentSize": "318 MB"
+      "name": "llm_cache_v5.tar.gz",
+      "description": "Compressed tarball of the V5 LLM cache. Decompresses to roughly 320 MB containing two top-level directories baseline/ and shock/, each holding tens of thousands of JSON files.",
+      "contentUrl": "https://huggingface.co/datasets/aup-anon-2026/AUP-V5-LLM-cache-Berlin-Ortsteile/resolve/main/llm_cache_v5.tar.gz",
+      "encodingFormat": "application/gzip",
+      "sha256": "7f94ea6c56c4d2894f9b63aa8a61e91780d14fddedf24d3f4300a55264cb868e",
+      "contentSize": "16145979 B"
     }
   ],
   "recordSet": [

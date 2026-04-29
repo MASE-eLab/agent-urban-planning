@@ -24,7 +24,7 @@ After cloning the repository:
 
 ```bash
 # From the repository root:
-curl -L -o llm_cache_v5.tar.gz <anonymized-cache-release-URL>
+curl -L -o llm_cache_v5.tar.gz https://huggingface.co/datasets/aup-anon-2026/AUP-V5-LLM-cache-Berlin-Ortsteile/resolve/main/llm_cache_v5.tar.gz
 tar -xzf llm_cache_v5.tar.gz -C data/berlin/
 rm llm_cache_v5.tar.gz
 ```

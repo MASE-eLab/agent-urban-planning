@@ -121,7 +121,7 @@ Use the bundled LLM-response cache hosted as a GitHub release asset:
 ```bash
 # 1. Download + extract the cache (one-time, 15 MB compressed → 320 MB raw)
 curl -L -o llm_cache_v5.tar.gz \
-  https://anonymous.4open.science/r/agent-urban-planning-4B4D/releases/download/v0.1.0-data/llm_cache_v5.tar.gz
+  https://huggingface.co/datasets/aup-anon-2026/AUP-V5-LLM-cache-Berlin-Ortsteile/resolve/main/llm_cache_v5.tar.gz
 tar -xzf llm_cache_v5.tar.gz -C data/berlin/
 
 # 2. Run V5 with cache replay

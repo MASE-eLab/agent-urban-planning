@@ -48,3 +48,6 @@ data/berlin/llm_cache_v5/*
 .coverage
 htmlcov/
 .tox/
+
+# Hugging Face upload staging directory
+hf_upload/
