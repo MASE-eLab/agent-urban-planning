@@ -37,7 +37,7 @@
   "@type": "sc:Dataset",
   "conformsTo": "http://mlcommons.org/croissant/1.0",
   "name": "AUP-V5-LLM-cache-Berlin-Ortsteile",
-  "description": "Bundled prompt-response cache from the V5 (LLM-decide) decision engine on the 96-zone Berlin Ortsteile benchmark instance of the AUP framework. The cache contains 80,124 prompt-response pairs (40,062 baseline + 40,062 shock) generated under temperature 0 against an API-pinned foundation-model snapshot. It enables Tier 4 bit-identical reproduction of the V5 headline numbers in the AUP paper without consuming LLM credits. Each cache entry is a JSON file keyed by <persona-cluster-id>_<iteration>_<stage>.json under the baseline/ and shock/ subdirectories.",
+  "description": "Bundled prompt-response cache from the V5 (LLM-decide) decision engine on the 96-zone Berlin Ortsteile benchmark instance of the AUP framework. The cache contains 80,124 prompt-response pairs (40,062 baseline + 40,062 shock) generated under temperature 0 against an API-pinned foundation-model snapshot. It enables Tier 4 bit-identical reproduction of the V5 headline numbers in the AUP paper without consuming LLM credits. Each cache entry is a JSON file under baseline/ or shock/, keyed by <persona-cluster-id>_<iteration>_<stage>.json (the four key components are: condition, an integer persona cluster id in 0-49, the tatonnement market-iteration index, and stage which is either stage1_residence or stage2_workplace). Each JSON file contains four fields: prompt (the full prompt sent to the foundation model), response (the raw structured LLM response), parsed_action (the parsed residence-workplace action pair), and satisfaction_score (the LLM-elicited 0-100 self-rated satisfaction score that V5 uses as its per-agent welfare contribution).",
   "license": "https://creativecommons.org/licenses/by/4.0/",
   "url": "https://huggingface.co/datasets/aup-anon-2026/AUP-V5-LLM-cache-Berlin-Ortsteile",
   "version": "0.1.0",
@@ -57,7 +57,7 @@
     "reproducibility cache"
   ],
   "rai:dataCollection": "Generated via deterministic prompts (full prompt templates in Appendix C of the AUP paper) against an API-pinned foundation-model snapshot at sampling temperature 0. No human subjects were involved and no third-party data was ingested. Inputs to each prompt are derived from the public Berlin Ortsteile aggregation and the East-West Express tau-shock specification, both of which are bundled with the AUP codebase.",
-  "rai:annotationCollection": "No human annotation. Each cache entry stores the raw structured LLM response, parsed into (residence_zone, workplace_zone) action assignments and a 0-100 self-rated satisfaction score. The parser implementation is in src/simulator/decisions/llm.py of the AUP codebase.",
+  "rai:annotationCollection": "No human annotation. Each cache entry stores the raw structured LLM response, parsed into (residence_zone, workplace_zone) action assignments and a 0-100 self-rated satisfaction score. The parser implementation is in src/agent_urban_planning/decisions/llm.py of the AUP codebase.",
   "rai:dataUseCases": "(i) Tier 4 bit-identical reproduction of the AUP-Berlin V5 headline numbers without LLM credits. (ii) Pedagogical illustration of LLM-driven choice-rule behaviour under spatial-equilibrium clearing for graduate coursework. (iii) Comparative analysis with alternative decision engines plugged into the AUP DecisionEngine interface.",
   "rai:dataLimitations": "Cache entries inherit any biases of the foundation-model snapshot at the time of generation (training-data priors plausibly biased toward Western-metropolis defaults; see Appendix B of the AUP paper). The cache is bit-identical to the underlying snapshot and does not generalise to other foundation models or sampling temperatures.",
   "distribution": [
@@ -70,72 +70,6 @@
       "encodingFormat": "application/gzip",
       "sha256": "7f94ea6c56c4d2894f9b63aa8a61e91780d14fddedf24d3f4300a55264cb868e",
       "contentSize": "16145979 B"
-    }
-  ],
-  "recordSet": [
-    {
-      "@type": "cr:RecordSet",
-      "@id": "cache-entries",
-      "name": "cache-entries",
-      "description": "Per-iteration LLM prompt-response records keyed by persona cluster, market iteration, and decision stage.",
-      "field": [
-        {
-          "@type": "cr:Field",
-          "@id": "cache-entries/condition",
-          "name": "condition",
-          "description": "Either 'baseline' or 'shock'.",
-          "dataType": "sc:Text"
-        },
-        {
-          "@type": "cr:Field",
-          "@id": "cache-entries/persona_cluster_id",
-          "name": "persona_cluster_id",
-          "description": "Index of the K=50 demographic cluster (0-49).",
-          "dataType": "sc:Integer"
-        },
-        {
-          "@type": "cr:Field",
-          "@id": "cache-entries/iteration",
-          "name": "iteration",
-          "description": "Tatonnement market iteration index.",
-          "dataType": "sc:Integer"
-        },
-        {
-          "@type": "cr:Field",
-          "@id": "cache-entries/stage",
-          "name": "stage",
-          "description": "Either 'stage1_residence' or 'stage2_workplace'.",
-          "dataType": "sc:Text"
-        },
-        {
-          "@type": "cr:Field",
-          "@id": "cache-entries/prompt",
-          "name": "prompt",
-          "description": "Full prompt sent to the foundation model.",
-          "dataType": "sc:Text"
-        },
-        {
-          "@type": "cr:Field",
-          "@id": "cache-entries/response",
-          "name": "response",
-          "description": "Raw structured LLM response.",
-          "dataType": "sc:Text"
-        },
-        {
-          "@type": "cr:Field",
-          "@id": "cache-entries/parsed_action",
-          "name": "parsed_action",
-          "description": "Parsed (residence_zone, workplace_zone) action pair.",
-          "dataType": "sc:Text"
-        },
-        {
-          "@type": "cr:Field",
-          "@id": "cache-entries/satisfaction_score",
-          "name": "satisfaction_score",
-          "description": "LLM-elicited 0-100 self-rated satisfaction score, used as V5's per-agent welfare contribution.",
-          "dataType": "sc:Integer"
-        }
-      ]
     }
   ]
 }
