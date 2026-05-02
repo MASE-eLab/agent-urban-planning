@@ -62,11 +62,28 @@ Estimated cost: $30-50 in API credits. Wall-clock: ~10 hr.
 
 Each variant's `output/{variant}/per_zone.csv` and
 `output/{variant}_shock_east_west/per_zone.csv` contain the per-zone
-sim/obs values for cross-variant analysis. The paper's headline
-moments table and choropleths are reproduced in `figures/` of this
-repo (`comparison_moments.csv`, `berlin_dlogQ.png`, `berlin_dlogW.png`)
-and bundled in the README. Custom analyses can be built directly off
-the `per_zone.csv` outputs using pandas/matplotlib.
+sim/obs values for cross-variant analysis. After all five variants
+have run, two aggregation scripts produce the paper's headline
+artefacts directly from the per-variant CSVs:
+
+```bash
+# Cross-variant moments (paper Tables 2 and 5)
+python examples/02_berlin_replication/build_moments_table.py
+
+# Per-zone Δlog Q and Δlog w choropleths (paper Figures 3 and 4)
+python examples/02_berlin_replication/plot_dlogQ_dlogw.py
+```
+
+Outputs land in `output/comparison/` as `comparison_moments_*.csv`,
+`comparison_moments.md`, `figure_dlogQ.png`, and `figure_dlogw.png`.
+`plot_dlogQ_dlogw.py` requires the `[plot]` install extra (geopandas
++ matplotlib).
+
+Pre-rendered versions of the paper's headline figures and tables are
+also bundled at `figures/comparison_moments.csv`, `figures/berlin_dlogQ.png`,
+and `figures/berlin_dlogW.png` for offline reference. Custom analyses
+beyond the bundled scripts can be built directly off the
+`per_zone.csv` outputs using pandas/matplotlib.
 
 ## Numerical reproducibility
 

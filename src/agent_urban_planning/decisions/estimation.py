@@ -27,7 +27,7 @@ import numpy as np
 from scipy.optimize import minimize
 from scipy.special import logsumexp
 
-from agent_urban_planning.research.singapore.data_base import normalize_town_name
+from agent_urban_planning.research.data_base import normalize_town_name
 
 
 # ------------------------------------------------------------------

@@ -5,7 +5,7 @@ Reproduces the paper's 5 model variants (V1, V2, V3, V4, V5) on the
 
 ## What you'll get
 
-Each script produces two `per_zone.csv` files (96 rows each):
+Each `run_v*.py` script produces two `per_zone.csv` files (96 rows each):
 
 - `output/{variant}/per_zone.csv` — baseline equilibrium
 - `output/{variant}_shock_east_west/per_zone.csv` — shock equilibrium
@@ -16,6 +16,23 @@ residence count, workplace count, wages.
 
 Plus `seed.json`, `diagnostics.json` (and `shock_config.json` for
 shock runs) per directory for reproducibility metadata.
+
+After all five variants finish, two further scripts aggregate the
+per-zone CSVs into the artefacts reported in the paper:
+
+| Script | Produces | Paper artefact |
+|---|---|---|
+| `build_moments_table.py` | `output/comparison/comparison_moments_abridged.csv` + `comparison_moments_full.csv` + `comparison_moments.md` | Tables 2 (abridged) and 5 (full) |
+| `plot_dlogQ_dlogw.py` | `output/comparison/figure_dlogQ.png` and `figure_dlogw.png` | Figures 3 and 4 |
+
+```bash
+# After V1-V5 have all been run:
+python examples/02_berlin_replication/build_moments_table.py
+python examples/02_berlin_replication/plot_dlogQ_dlogw.py
+```
+
+`plot_dlogQ_dlogw.py` requires `geopandas` and `matplotlib`; install
+with `pip install -e ".[plot]"` if not already.
 
 ## Prerequisites
 

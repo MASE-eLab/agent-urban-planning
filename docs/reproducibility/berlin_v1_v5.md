@@ -111,7 +111,30 @@ Cost: $30-50. Wall-clock: ~10 hr. Reproduces baseline + shock from scratch.
 Each `output/{variant}/per_zone.csv` and
 `output/{variant}_shock_east_west/per_zone.csv` is a 96-row CSV with
 columns `zone_id, Q_sim, HR_sim, HM_sim, wage_sim, Q_obs, HR_obs,
-HM_obs, wage_obs`. Use these directly for cross-variant comparisons:
+HM_obs, wage_obs`.
+
+Two aggregation scripts under `examples/02_berlin_replication/`
+consume the per-variant CSVs and produce the paper's headline
+artefacts:
+
+```bash
+# Cross-variant moments (paper Tables 2 and 5)
+python examples/02_berlin_replication/build_moments_table.py
+# -> output/comparison/comparison_moments_abridged.csv  (Table 2)
+# -> output/comparison/comparison_moments_full.csv      (Table 5)
+# -> output/comparison/comparison_moments.md            (GFM table)
+
+# Per-zone choropleths (paper Figures 3 and 4)
+python examples/02_berlin_replication/plot_dlogQ_dlogw.py
+# -> output/comparison/figure_dlogQ.png                 (Figure 3)
+# -> output/comparison/figure_dlogw.png                 (Figure 4)
+```
+
+`plot_dlogQ_dlogw.py` requires `geopandas` and `matplotlib`; install
+with `pip install -e ".[plot]"` if not already.
+
+For custom analyses, the per-zone CSVs are usable directly with
+`pandas`:
 
 ```python
 import pandas as pd
@@ -121,9 +144,10 @@ dlog_Q = (v1_shock.Q_sim / v1.Q_sim).pipe(lambda s: s.apply("log"))
 print(dlog_Q.describe())
 ```
 
-The paper's headline cross-variant moments table and choropleths are
-in `figures/comparison_moments.csv`, `figures/berlin_dlogQ.png`,
-`figures/berlin_dlogW.png` (bundled in the repo).
+Pre-rendered versions of the paper's headline figures and tables are
+also bundled at `figures/comparison_moments.csv`, `figures/berlin_dlogQ.png`,
+and `figures/berlin_dlogW.png` for offline reference without rerunning
+the pipeline.
 
 ## Numerical reproducibility expectations
 

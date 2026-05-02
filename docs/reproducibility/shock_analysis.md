@@ -65,7 +65,7 @@ gradient flattening + agglomeration mechanisms.
 ## Comparing variants' shock responses
 
 Cross-variant moments table (built by
-{file}`scripts/build_comparison_moments_table.py` in the dev repo):
+{file}`examples/02_berlin_replication/build_moments_table.py`):
 
 ```
                        μ ΔQ      σ ΔQ      ΔY%       Δ⟨U⟩  (V1 ruler)
@@ -90,11 +90,18 @@ See the paper's §6 (cross-variant comparison) for the full discussion.
 After all 5 variants complete (Tier 3 + Tier 4):
 
 ```bash
-python scripts/build_comparison_moments_table.py
+python examples/02_berlin_replication/build_moments_table.py
+python examples/02_berlin_replication/plot_dlogQ_dlogw.py
 ```
 
-Outputs `output/comparison/comparison_moments.csv` and a markdown
-companion suitable for paste into the paper.
+The first script writes the moments table in two layouts —
+`output/comparison/comparison_moments_abridged.csv` (paper Table 2)
+and `output/comparison/comparison_moments_full.csv` (paper Table 5)
+— plus `comparison_moments.md` for paste-into-README use. The second
+script renders the per-zone Δlog Q and Δlog w choropleths (paper
+Figures 3 and 4) to `output/comparison/figure_dlogQ.png` and
+`figure_dlogw.png`, and requires the `[plot]` install extra
+(`pip install -e ".[plot]"`).
 
 ## See also
 
