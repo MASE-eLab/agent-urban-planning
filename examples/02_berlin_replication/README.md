@@ -40,7 +40,7 @@ with `pip install -e ".[plot]"` if not already.
 curl -L -o aup.zip 'https://anonymous.4open.science/api/repo/agent-urban-planning-4B4D/zip'
 unzip aup.zip -d agent-urban-planning-4B4D
 cd agent-urban-planning-4B4D
-python3.9 -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
 pip install -e ".[llm,plot,berlin]"
