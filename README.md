@@ -111,9 +111,30 @@ Full table + interpretation: [`figures/comparison_moments.csv`](figures/comparis
 
 The full paper §6 discusses why LLM-ABM diverges (gradient-flattening + agglomeration, both forbidden in exogenous-productivity structural models).
 
+## Authentication for live LLM runs
+
+The Tier 4 cache replay (`run_v5_score_all.py --no-llm`) and Tiers 1–3c (V1/V2/V3, all closed-form) need **no** API keys. Only Tier 3d (V4 live) and Tier 4-live (V5 from scratch) call external LLMs.
+
+For those, copy `.env.example` to `.env` and fill in the variable for your provider:
+
+```bash
+cp .env.example .env
+# Edit .env with the key(s) for the provider you'll use.
+```
+
+Both `run_v4_hybrid.py` and `run_v5_score_all.py` call `load_dotenv()` at startup, so `.env` is picked up automatically.
+
+| `--llm-provider` | What you need |
+| --- | --- |
+| `anthropic` | `ANTHROPIC_API_KEY=sk-...` in `.env` |
+| `openai` | `OPENAI_API_KEY=sk-...` in `.env` |
+| `zai-coding` | `ZAI_API_KEY=...` in `.env` |
+| `codex-cli` | OAuth — run `codex login` once (no key in `.env`) |
+| `claude-code` | OAuth — run `claude` interactively once (no key in `.env`) |
+
 ## Reproduce the paper results
 
-The paper's V1–V5 Berlin runs (baseline + East-West Express shock) reproduce end-to-end from a `git clone`. Pick a path:
+The paper's V1–V5 Berlin runs (baseline + East-West Express shock) reproduce end-to-end from a clean ZIP download. Pick a path:
 
 ```bash
 curl -L -o aup.zip 'https://anonymous.4open.science/api/repo/agent-urban-planning-4B4D/zip'
@@ -138,7 +159,7 @@ python examples/02_berlin_replication/run_v4_hybrid.py --llm-provider codex-cli
 # Tier 4 — V5 LLM-ABM, paper headline. Two paths.
 #   Path A: replay the bundled cache (~5–10 min, no credits, recommended for reviewers)
 curl -L -o llm_cache_v5.tar.gz \
-  https://anonymous.4open.science/r/agent-urban-planning-4B4D/releases/download/v0.1.0-data/llm_cache_v5.tar.gz
+  https://huggingface.co/datasets/aup-anon-2026/AUP-V5-LLM-cache-Berlin-Ortsteile/resolve/main/llm_cache_v5.tar.gz
 tar -xzf llm_cache_v5.tar.gz -C data/berlin/
 python examples/02_berlin_replication/run_v5_score_all.py --no-llm
 

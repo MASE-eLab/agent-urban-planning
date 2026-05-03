@@ -38,6 +38,9 @@ import argparse
 import json
 from pathlib import Path
 
+from dotenv import load_dotenv
+load_dotenv()  # No-op for --no-llm replays; loads provider keys for live runs.
+
 import agent_urban_planning as aup
 
 from _common import (

@@ -13,6 +13,9 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+from dotenv import load_dotenv
+load_dotenv()  # Picks up ANTHROPIC_API_KEY / OPENAI_API_KEY / ZAI_API_KEY etc.
+
 import agent_urban_planning as aup
 from agent_urban_planning.llm.clients import LLMPreferenceElicitor
 
