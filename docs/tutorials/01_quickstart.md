@@ -19,8 +19,12 @@ To reproduce the paper's Berlin numbers, you also need the bundled
 data, which means a `git clone` rather than `pip install`:
 
 ```bash
-git clone https://anonymous.4open.science/r/agent-urban-planning-4B4D.git
-cd agent-urban-planning
+curl -L -o aup.zip 'https://anonymous.4open.science/api/repo/agent-urban-planning-4B4D/zip'
+unzip aup.zip -d agent-urban-planning-4B4D
+cd agent-urban-planning-4B4D
+python3.9 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
 pip install -e ".[llm,plot,berlin]"
 ```
 

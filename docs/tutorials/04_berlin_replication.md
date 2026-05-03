@@ -6,15 +6,19 @@ End-to-end reproduction of the paper's 5 model variants on the synthetic
 ## Prerequisites
 
 ```bash
-git clone https://anonymous.4open.science/r/agent-urban-planning-4B4D.git
-cd agent-urban-planning
+curl -L -o aup.zip 'https://anonymous.4open.science/api/repo/agent-urban-planning-4B4D/zip'
+unzip aup.zip -d agent-urban-planning-4B4D
+cd agent-urban-planning-4B4D
+python3.9 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
 pip install -e ".[llm,plot,berlin]"
 ```
 
 The bundled Berlin Ortsteile NPZ files at `data/berlin/ortsteile/` are
 required. They ship in the git repo (~15 MB; see `data/README.md` for
 size + license attribution to Ahlfeldt et al. 2015) but NOT in the PyPI
-sdist. **`pip install` alone is not enough — you need the git clone.**
+sdist. **`pip install` alone is not enough — you need the ZIP download.**
 
 ## Reproducibility tiers
 
@@ -101,8 +105,9 @@ documented to within 1e-3 tolerance in the
 ## Troubleshooting
 
 **"Bundled Berlin data missing" error**: You ran `pip install` instead
-of `git clone`. The data files are git-only. Re-clone the repo or
-download the data separately.
+of the ZIP download. The data files only ship inside the
+anonymous.4open.science archive, not in the PyPI sdist. Re-fetch
+the ZIP from anonymous.4open.science.
 
 **LLM provider not configured**: For V4 and V5 live runs, verify
 `codex --version` works (or your chosen provider's auth). Use `--no-llm`

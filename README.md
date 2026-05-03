@@ -40,8 +40,12 @@ The simulator is organized as a five-stage pipeline. **(1) Environment** — a c
 ## Quickstart
 
 ```bash
-git clone https://anonymous.4open.science/r/agent-urban-planning-4B4D.git
-cd agent-urban-planning
+curl -L -o aup.zip 'https://anonymous.4open.science/api/repo/agent-urban-planning-4B4D/zip'
+unzip aup.zip -d agent-urban-planning-4B4D
+cd agent-urban-planning-4B4D
+python3.9 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
 pip install -e ".[llm,plot,berlin]"
 python examples/01_quickstart.py
 ```
@@ -112,8 +116,12 @@ The full paper §6 discusses why LLM-ABM diverges (gradient-flattening + agglome
 The paper's V1–V5 Berlin runs (baseline + East-West Express shock) reproduce end-to-end from a `git clone`. Pick a path:
 
 ```bash
-git clone https://anonymous.4open.science/r/agent-urban-planning-4B4D.git
-cd agent-urban-planning
+curl -L -o aup.zip 'https://anonymous.4open.science/api/repo/agent-urban-planning-4B4D/zip'
+unzip aup.zip -d agent-urban-planning-4B4D
+cd agent-urban-planning-4B4D
+python3.9 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
 pip install -e ".[llm,plot,berlin]"
 
 # Tier 1+2 — quickstart pipeline walkthrough (<1 min, V1 baseline only)

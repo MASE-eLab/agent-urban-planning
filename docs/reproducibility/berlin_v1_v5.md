@@ -59,14 +59,19 @@ Walks through Environment → Agents → Decision → Market → Equilibrium
 for V1 (closed-form softmax). Verifies the install + pipeline wiring
 end-to-end.
 
-### Tier 3+ requires git clone
+### Tier 3+ requires the full ZIP download
 
-The bundled Berlin Ortsteile NPZ files are git-only (excluded from PyPI
-sdist). Tier 3 and Tier 4 require:
+The bundled Berlin Ortsteile NPZ files ship only inside the
+anonymous.4open.science archive (excluded from the PyPI sdist).
+Tier 3 and Tier 4 require:
 
 ```bash
-git clone https://anonymous.4open.science/r/agent-urban-planning-4B4D.git
-cd agent-urban-planning
+curl -L -o aup.zip 'https://anonymous.4open.science/api/repo/agent-urban-planning-4B4D/zip'
+unzip aup.zip -d agent-urban-planning-4B4D
+cd agent-urban-planning-4B4D
+python3.9 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
 pip install -e ".[llm,plot,berlin]"
 ```
 
@@ -163,7 +168,8 @@ the pipeline.
 ## Troubleshooting
 
 ### "Bundled Berlin data missing"
-You ran `pip install` instead of `git clone`. Re-clone the repo.
+You ran `pip install` instead of the ZIP download. Re-fetch the
+ZIP from anonymous.4open.science.
 
 ### LLM provider not configured
 ```bash
