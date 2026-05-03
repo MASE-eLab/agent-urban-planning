@@ -42,6 +42,9 @@ from dotenv import load_dotenv
 load_dotenv()  # No-op for --no-llm replays; loads provider keys for live runs.
 
 import agent_urban_planning as aup
+from agent_urban_planning.llm.prompts.hierarchical import (
+    PROMPT_VERSION_V4_SCORE_ALL,
+)
 
 from _common import (
     BERLIN_DATA_DIR,
@@ -210,6 +213,7 @@ def main() -> int:
             response_format="score_all",       # paper's V5 headline
             rebalance_instruction=True,        # affordability instruction
             stage2_top_k_residences=10,        # cost cap on stage-2 fan-out
+            prompt_version=PROMPT_VERSION_V4_SCORE_ALL,  # match bundled cache key
             cluster_k=args.cluster_k,
             zone_name_map=zone_name_map,
             cache_dir=cache_root / phase,

@@ -34,14 +34,15 @@ from agent_urban_planning.decisions.ahlfeldt_hierarchical_llm_engine import (
 _VALID_RESPONSE_FORMATS = ("top5", "score_all")
 
 
-def _select_prompt_and_validator(
+def _select_prompt_validator_and_version(
     response_format: str,
     rebalance_instruction: bool,
-) -> tuple[Optional[Callable], Optional[Callable]]:
-    """Choose (prompt_builder, response_validator) callables for the given config.
+) -> tuple[Optional[Callable], Optional[Callable], str]:
+    """Choose (prompt_builder, response_validator, prompt_version) for the given config.
 
-    Returns ``(None, None)`` for the default case so the underlying engine
-    can pick its own defaults.
+    The ``prompt_version`` is part of the LLM cache key, so each prompt
+    variant must use its own version string. Mismatching the version
+    against the bundled cache produces 100% cache misses on every lookup.
     """
     from agent_urban_planning.llm.prompts.hierarchical import (
         build_stage1_prompt,
@@ -49,14 +50,19 @@ def _select_prompt_and_validator(
         build_stage1_prompt_rank_rebalanced,
         validate_top5_response,
         validate_all_scores_response,
+        PROMPT_VERSION,
+        PROMPT_VERSION_V3_RANK,
+        PROMPT_VERSION_V4_SCORE_ALL,
     )
 
     if response_format == "score_all":
-        return build_stage1_prompt_score_all, validate_all_scores_response
+        return (build_stage1_prompt_score_all, validate_all_scores_response,
+                PROMPT_VERSION_V4_SCORE_ALL)
     if response_format == "top5":
         if rebalance_instruction:
-            return build_stage1_prompt_rank_rebalanced, validate_top5_response
-        return build_stage1_prompt, validate_top5_response
+            return (build_stage1_prompt_rank_rebalanced, validate_top5_response,
+                    PROMPT_VERSION_V3_RANK)
+        return build_stage1_prompt, validate_top5_response, PROMPT_VERSION
     raise ValueError(
         f"response_format={response_format!r} is not valid; expected one of "
         f"{_VALID_RESPONSE_FORMATS}"
@@ -180,15 +186,18 @@ class LLMDecisionEngine:
                 f"expected one of {_VALID_RESPONSE_FORMATS}"
             )
 
-        # Determine which prompt builder + validator to use.
-        if prompt_builder is None or response_validator is None:
-            sel_pb, sel_rv = _select_prompt_and_validator(
-                response_format, rebalance_instruction,
-            )
-            if prompt_builder is None:
-                prompt_builder = sel_pb
-            if response_validator is None:
-                response_validator = sel_rv
+        # Determine which prompt builder + validator + version to use.
+        sel_pb, sel_rv, sel_pv = _select_prompt_validator_and_version(
+            response_format, rebalance_instruction,
+        )
+        if prompt_builder is None:
+            prompt_builder = sel_pb
+        if response_validator is None:
+            response_validator = sel_rv
+        # prompt_version is part of the cache key; default to the
+        # response_format-matched version unless the caller overrode it.
+        if "prompt_version" not in kwargs:
+            kwargs["prompt_version"] = sel_pv
 
         self._response_format = response_format
         self._rebalance_instruction = rebalance_instruction
