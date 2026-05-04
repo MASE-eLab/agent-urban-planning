@@ -28,8 +28,12 @@ synthetic 96-zone Berlin scenario.
   - V2 / V3 baseline + shock
   - ~3 hr each
   - Tier 3a
-* - **Tier 3c**
-  - V4 baseline + shock
+* - **Tier 3c (cache replay)**
+  - V4 baseline + shock from bundled preference cache
+  - ~3 hr
+  - Tier 3a + bundled `data/berlin/llm_cache_v4/`
+* - **Tier 3c (live)**
+  - V4 baseline + shock with live LLM elicitation
   - ~3 hr
   - Tier 3a + LLM credits (~$5)
 * - **Tier 4 (cache replay)**
@@ -93,7 +97,14 @@ python examples/02_berlin_replication/run_v3_argmax_normal.py
 ```
 Each ~3 hr. V2 and V3 are stochastic but seeded — deterministic at seed 42.
 
-### Tier 3c: V4 (LLM elicitation)
+### Tier 3c (cache replay): V4 from bundled preference cache
+```bash
+python examples/02_berlin_replication/run_v4_hybrid.py --no-llm
+```
+Replays the bundled cache at `data/berlin/llm_cache_v4/` (~400 entries).
+~3 hr wall-clock, no LLM credits, bit-identical reproduction.
+
+### Tier 3c (live): V4 with live LLM elicitation
 ```bash
 python examples/02_berlin_replication/run_v4_hybrid.py --llm-provider codex-cli
 ```
@@ -161,7 +172,8 @@ the pipeline.
 | V1 (Baseline-softmax) | Fully deterministic | exact |
 | V2 (Baseline-ABM argmax) | Seeded stochastic | <1e-3 numerical |
 | V3 (Normal-ABM argmax) | Seeded stochastic | <1e-3 numerical |
-| V4 (Hybrid-ABM) | Seeded + LLM cache | <1e-2 (LLM elicitation noise) |
+| V4 (Hybrid-ABM, cache replay) | Cache-deterministic | exact |
+| V4 (Hybrid-ABM, live) | Seeded + provider-dependent | <1e-2 (elicitation noise) |
 | V5 (LLM-ABM, cache replay) | Cache-deterministic | exact |
 | V5 (LLM-ABM, live) | Provider + temperature dependent | qualitative match only |
 

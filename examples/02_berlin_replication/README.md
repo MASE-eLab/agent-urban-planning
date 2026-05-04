@@ -69,7 +69,8 @@ For V4 and V5 you also need an LLM provider:
 | Tier 3a | V1 (Baseline-softmax) | ~3 hr | No |
 | Tier 3b | V2 (Baseline-ABM argmax, Fréchet) | ~3 hr | No |
 | Tier 3c | V3 (Normal-ABM argmax) | ~3 hr | No |
-| Tier 3d | V4 (Hybrid-ABM, LLM elicitation) | ~3 hr | Yes (~$5 with codex-cli) |
+| Tier 3d | V4 (Hybrid-ABM, cache replay) | ~3 hr | No (bundled cache) |
+| Tier 3d | V4 (Hybrid-ABM, live LLM elicitation) | ~3 hr | Yes (~$5 with codex-cli) |
 | **Tier 4 V5 — cache replay** | V5 (LLM-ABM, paper headline) | **~5–10 min** | **No** (uses bundled cache) |
 | Tier 4 V5 — from scratch | V5 (LLM-ABM, paper headline) | ~10 hr live | Yes (~$30–50 with codex-cli) |
 
@@ -104,26 +105,30 @@ python examples/02_berlin_replication/run_v3_argmax_normal.py
 
 Same as V2 but with Gaussian shocks (thinner tails).
 
-### V4 — Hybrid-ABM (Tier 3d, ~3 hr, ~$5 in LLM credits)
+### V4 — Hybrid-ABM (Tier 3d, ~3 hr)
 
-V4 uses an LLM to elicit per-agent preference weights `(β, κ)` once
-per agent type, then runs the closed-form mixed logit. The
-elicitation is light: ~50 LLM calls total per provider.
+V4 uses an LLM to elicit per-agent factor weights $\hat\phi$ over
+(rent, commute, amenity, wage) once per agent type, then runs the
+closed-form mixed logit. The elicitation is light: ~500 LLM calls
+total. Two run modes:
 
 ```bash
-# Recommended provider (paper's provider, OAuth-managed):
+# Path A: replay the bundled preference cache (no LLM credits, bit-identical)
+python examples/02_berlin_replication/run_v4_hybrid.py --no-llm
+
+# Path B: live elicitation (paper's provider, OAuth-managed; ~$5)
 python examples/02_berlin_replication/run_v4_hybrid.py --llm-provider codex-cli
 
-# Other providers:
+# Other live providers:
 python examples/02_berlin_replication/run_v4_hybrid.py --llm-provider claude-code
 python examples/02_berlin_replication/run_v4_hybrid.py --llm-provider anthropic
 python examples/02_berlin_replication/run_v4_hybrid.py --llm-provider openai
 ```
 
-Elicited preferences cache to
-`.cache/llm_preferences_berlin_v4/` (per-agent-type JSON files keyed
-by demographic signature). Same provider + seed = same elicited
-preferences.
+The bundled cache lives at `data/berlin/llm_cache_v4/` (per-agent-type
+JSON files keyed by demographic signature, ~400 entries). `--no-llm`
+fails fast on a cache miss. Live runs read from the same directory,
+fall through to the LLM on miss, and write new entries back.
 
 There is no separate "with cache" / "from scratch" distinction for V4
 because the elicitation cache is small (~50 entries) and rebuilds in

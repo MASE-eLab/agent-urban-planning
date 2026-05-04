@@ -113,7 +113,7 @@ The full paper §6 discusses why LLM-ABM diverges (gradient-flattening + agglome
 
 ## Authentication for live LLM runs
 
-The Tier 4 cache replay (`run_v5_score_all.py --no-llm`) and Tiers 1–3c (V1/V2/V3, all closed-form) need **no** API keys. Only Tier 3d (V4 live) and Tier 4-live (V5 from scratch) call external LLMs.
+The Tier 3d V4 cache replay (`run_v4_hybrid.py --no-llm`), the Tier 4 V5 cache replay (`run_v5_score_all.py --no-llm`), and Tiers 1–3c (V1/V2/V3, all closed-form) need **no** API keys. Only Tier 3d-live (V4 from scratch) and Tier 4-live (V5 from scratch) call external LLMs.
 
 For those, copy `.env.example` to `.env` and fill in the variable for your provider:
 
@@ -153,8 +153,11 @@ python examples/02_berlin_replication/run_v1_softmax.py
 python examples/02_berlin_replication/run_v2_argmax_frechet.py
 python examples/02_berlin_replication/run_v3_argmax_normal.py
 
-# Tier 3d — V4 hybrid (~3 hr, ~$5 in LLM credits)
-python examples/02_berlin_replication/run_v4_hybrid.py --llm-provider codex-cli
+# Tier 3d — V4 hybrid. Two paths.
+#   Path A: replay the bundled per-agent preference cache (~3 hr, no credits, recommended for reviewers)
+python examples/02_berlin_replication/run_v4_hybrid.py --no-llm
+#   Path B: rerun from scratch with live LLM elicitation (~3 hr, ~$5 in credits)
+# python examples/02_berlin_replication/run_v4_hybrid.py --llm-provider codex-cli
 
 # Tier 4 — V5 LLM-ABM, paper headline. Two paths.
 #   Path A: replay the bundled cache (~5–10 min, no credits, recommended for reviewers)
@@ -176,7 +179,8 @@ python examples/02_berlin_replication/plot_dlogQ_dlogw.py
 | **1**    | `pip install` + `import agent_urban_planning` | <30 s      | No          |
 | **2**    | `examples/01_quickstart.py`                     | <10 s      | No          |
 | **3a-c** | V1, V2, V3 Berlin baseline + shock                | ~3 hr each | No          |
-| **3d**   | V4 Berlin baseline + shock (hybrid)               | ~3 hr      | ~$5         |
+| **3d**   | V4 Berlin baseline + shock (cache replay)         | ~3 hr      | No          |
+| **3d**   | V4 Berlin baseline + shock (live LLM)             | ~3 hr      | ~$5         |
 | **4**    | V5 Berlin baseline + shock (cache replay)         | ~5–10 min | No          |
 | **4**    | V5 Berlin baseline + shock (live LLM)             | ~10 hr     | ~$30–50    |
 

@@ -1,12 +1,17 @@
 """Unified ``HybridDecisionEngine`` API class — V4 via kwargs.
 
-Implements the V4 pattern: an LLM elicits per-agent preference weights
-(β, κ); a closed-form mixed-logit then computes discrete zone choice.
-The library exposes this as a single first-class API class so that user
-code instantiates one symbol regardless of the underlying implementation.
+Implements the V4 pattern: an LLM elicits per-agent factor-weight vector
+$\\hat\\phi$ (rent, commute, amenity, wage); per-agent Frechet shock plus
+argmax over the heterogeneously-scaled level utility produces the
+residence-workplace choice. The library exposes this as a single
+first-class API class so that user code instantiates one symbol
+regardless of the underlying implementation.
 
-Internally delegates to :class:`AhlfeldtArgmaxHybridEngine`, ported from
-the dev repo.
+Internally delegates to :class:`AhlfeldtShockArgmaxHybridEngine`, ported
+from the dev repo. This is the engine that produced the paper's
+Table 2 V4 numbers — V2's per-agent Frechet draw + argmax pattern with
+heterogeneous (beta_k, kappa_k) substituted for V2's homogeneous
+(beta, kappa).
 
 Example::
 
@@ -24,8 +29,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from agent_urban_planning.decisions.ahlfeldt_argmax_hybrid_engine import (
-    AhlfeldtArgmaxHybridEngine,
+from agent_urban_planning.decisions.ahlfeldt_shock_argmax_hybrid_engine import (
+    AhlfeldtShockArgmaxHybridEngine,
 )
 
 
@@ -113,7 +118,11 @@ class HybridDecisionEngine:
                 "the dev repo via simulator.decisions.elicitation but not yet "
                 "exposed in the public API. Pass `elicitor=` directly for now."
             )
-        self._impl = AhlfeldtArgmaxHybridEngine(
+        # Default shock_distribution to "frechet" to match the paper's V4
+        # specification (per-agent Frechet draw + heterogeneous beta_k, kappa_k
+        # + argmax). Caller can override via kwargs.
+        kwargs.setdefault("shock_distribution", "frechet")
+        self._impl = AhlfeldtShockArgmaxHybridEngine(
             params, elicitor=elicitor, **kwargs,
         )
 
@@ -121,7 +130,7 @@ class HybridDecisionEngine:
         """Forward to the underlying implementation's ``decide_batch``.
 
         Transparently forwards to
-        :meth:`AhlfeldtArgmaxHybridEngine.decide_batch`. Calling this
+        :meth:`AhlfeldtShockArgmaxHybridEngine.decide_batch`. Calling this
         triggers (and caches) LLM elicitation of per-type preference
         weights on the first invocation; subsequent calls reuse the
         cached weights.

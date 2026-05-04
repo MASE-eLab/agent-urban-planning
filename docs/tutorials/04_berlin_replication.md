@@ -27,7 +27,8 @@ sdist. **`pip install` alone is not enough — you need the ZIP download.**
 | Tier 3a | V1 (Baseline-softmax) | ~3 hr | No |
 | Tier 3b | V2 (Baseline-ABM argmax) | ~3 hr | No |
 | Tier 3c | V3 (Normal-ABM argmax) | ~3 hr | No |
-| Tier 3d | V4 (Hybrid-ABM) | ~3 hr | Yes (~$5) |
+| Tier 3d | V4 (Hybrid-ABM, cache replay) | ~3 hr | No (bundled cache) |
+| Tier 3d | V4 (Hybrid-ABM, live LLM) | ~3 hr | Yes (~$5) |
 | Tier 4 | V5 (LLM-ABM, paper headline) | ~10 hr live / ~5 min cache-replay | Yes (~$30-50 live) / No (cache replay) |
 
 A `--no-llm` mode on `run_v5_score_all.py` replays the bundled cached
@@ -92,11 +93,13 @@ beyond the bundled scripts can be built directly off the
 ## Numerical reproducibility
 
 V1, V2, V3 are deterministic (closed-form or seeded-stochastic). V4
-and V5 reproducibility depends on:
+and V5 cache-replay paths (`--no-llm`) are bit-identical when run
+against the bundled caches at `data/berlin/llm_cache_v4/` and
+`data/berlin/llm_cache_v5/` respectively. Live LLM runs are
+provider-dependent and additionally need:
 
-1. Same LLM provider (`codex-cli` recommended for V5)
-2. Same prompt cache (bundled at `data/berlin/llm_cache_v5/`)
-3. Same seed (42)
+1. Same LLM provider (`codex-cli` recommended)
+2. Same seed (42)
 
 Cross-variant numerical equivalence to the dev repo's outputs is
 documented to within 1e-3 tolerance in the
