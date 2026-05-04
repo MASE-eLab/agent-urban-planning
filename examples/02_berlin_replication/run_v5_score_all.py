@@ -22,6 +22,29 @@ phase and ``cache_dir/shock/`` for the shock phase. Phase isolation
 prevents hash collisions between baseline and shock prompts that share
 the same warm-start price bucket in early iterations.
 
+Forcing fully-fresh LLM dispatch (no cache reuse)
+-------------------------------------------------
+Live runs read the bundled cache at ``data/berlin/llm_cache_v5/`` first
+and only call the LLM on cache miss. To force a clean live run with no
+cache reuse (e.g., to compare against a different LLM provider, or to
+verify the LLM's behaviour from scratch), point ``--cache-dir`` at an
+empty directory:
+
+    python examples/02_berlin_replication/run_v5_score_all.py \\
+        --llm-provider codex-cli \\
+        --cache-dir /tmp/v5_fresh_cache
+
+This makes every cluster × iteration × stage combination a cache miss
+→ every prompt is dispatched to the LLM → all ~80,000 prompts hit the
+provider, billing the subscription / credits accordingly.
+
+Progress output during a live run
+---------------------------------
+Live runs print one line per ~0.5 s during stage-1 / stage-2 LLM-call
+batches via the engine's ``progress_callback``, plus per-iteration
+ΔQ / Δw / elapsed lines from the ``SimulationEngine`` market loop.
+Suppress with ``--quiet``.
+
 Configuration::
 
     aup.LLMDecisionEngine(
@@ -36,6 +59,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import time
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -45,6 +69,25 @@ import agent_urban_planning as aup
 from agent_urban_planning.llm.prompts.hierarchical import (
     PROMPT_VERSION_V4_SCORE_ALL,
 )
+
+
+def _make_inner_progress_cb(enabled: bool):
+    """Line-update ticker for stage-1 / stage-2 LLM-call progress within a
+    market iteration. Rate-limited to one line every ~0.5 s so live runs
+    print progress without console spam."""
+    if not enabled:
+        return None
+    last_emit = {"t": 0.0}
+    def _cb(stage: str, done: int, total: int, cached: int):
+        now = time.monotonic()
+        if now - last_emit["t"] < 0.5 and done < total:
+            return
+        last_emit["t"] = now
+        print(
+            f"  [{stage}] {done}/{total}  (cached: {cached})",
+            flush=True,
+        )
+    return _cb
 
 from _common import (
     BERLIN_DATA_DIR,
@@ -189,6 +232,10 @@ def main() -> int:
     parser.add_argument("--batch-size", type=int, default=10_000)
     parser.add_argument("--cluster-k", type=int, default=50)
     parser.add_argument("--llm-concurrency", type=int, default=15)
+    parser.add_argument("--quiet", action="store_true",
+                        help="Suppress per-stage LLM-call progress lines. "
+                             "Default is verbose (one line per ~0.5 s during "
+                             "stage-1/stage-2 LLM batches).")
     parser.add_argument("--cache-dir", type=Path, default=None,
                         help="Override the LLM cache directory. Default: "
                              "data/berlin/llm_cache_v5/")
@@ -203,6 +250,11 @@ def main() -> int:
 
     # Zone-name crosswalk so the LLM sees real Ortsteile names.
     zone_name_map = _load_zone_name_map(BERLIN_ZONE_NAMES)
+
+    # Print stage-1/stage-2 LLM-call progress unless --quiet is set. The
+    # callback is rate-limited to one line per ~0.5 s so live runs surface
+    # forward progress without spamming.
+    inner_cb = _make_inner_progress_cb(enabled=not args.quiet)
 
     def engine_factory(sc, seed, iters, *, phase="baseline"):
         # Phase-isolated cache dirs prevent baseline/shock hash collisions
@@ -221,6 +273,7 @@ def main() -> int:
             batch_size=args.batch_size,
             llm_concurrency=args.llm_concurrency,
             seed=seed,
+            progress_callback=inner_cb,
             dtype=getattr(sc.ahlfeldt_params, "dtype", "float64"),
         )
 

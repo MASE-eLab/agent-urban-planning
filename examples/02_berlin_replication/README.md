@@ -188,6 +188,64 @@ Path A replays. Reproducing exactly requires the same provider +
 model versions; live LLM runs at different providers will produce
 qualitatively similar but not bit-identical numbers.
 
+## Forcing fully-fresh LLM dispatch (no cache reuse)
+
+Both V4 and V5 read the bundled cache first and only call the LLM on
+cache miss. The bundled caches (~24 KB for V4 at
+`data/berlin/llm_cache_v4/`, ~320 MB uncompressed for V5 at
+`data/berlin/llm_cache_v5/{baseline,shock}/`) make live runs essentially
+free for paper-config reproduction.
+
+To force a clean live run with no cache reuse — useful for verifying
+the LLM's behaviour from scratch, comparing two providers on the same
+demographic prompts, or producing fresh research data — point the
+cache directory at an empty path:
+
+```bash
+# V4 fresh-elicitation
+python examples/02_berlin_replication/run_v4_hybrid.py \
+    --llm-provider codex-cli \
+    --preference-cache-dir /tmp/v4_fresh_cache
+
+# V5 fresh-cache
+python examples/02_berlin_replication/run_v5_score_all.py \
+    --llm-provider codex-cli \
+    --cache-dir /tmp/v5_fresh_cache
+```
+
+Every prompt becomes a cache miss, so all ~500 (V4) or ~80,000 (V5)
+LLM calls hit the provider. With codex-cli (subscription) the cost is
+absorbed by the plan; with `anthropic` / `openai` direct API the cost
+is per-token billed.
+
+## Live-run progress output
+
+The V5 live-run script prints progress in two layers (suppress with
+`--quiet`):
+
+- **Per-iteration markers** from `SimulationEngine`: ΔQ, Δw, elapsed
+  per market-clearing iteration.
+- **Per-stage LLM-call ticker** from the engine's `progress_callback`:
+  one line per ~0.5 s during stage-1 / stage-2 LLM batches showing
+  `done/total (cached: N)`.
+
+Sample output during a live V5 baseline run:
+
+```
+[berlin_v5_score_all] start at 13:44:10 seed=42
+[berlin_v5_score_all] L = V × K^0.75 applied, Σ = 753665
+[berlin_v5_score_all] zones=96, agents=10000, mass=1770666
+  [stage1] 12/50  (cached: 0)
+  [stage1] 23/50  (cached: 0)
+  [stage1] 35/50  (cached: 0)
+  ...
+  [stage2] 47/250 (cached: 0)
+  ...
+[V5 iter   1] ΔQ=0.0184  Δw=0.0091  elapsed= 287.3s
+  [stage1] ...
+  ...
+```
+
 ## Cross-variant comparison
 
 After each variant has produced its `output/{variant}/per_zone.csv`

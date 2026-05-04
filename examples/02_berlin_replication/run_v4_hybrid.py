@@ -17,6 +17,22 @@ Two run modes:
 
 For smoke-testing the pipeline without LLM credits or the bundled
 cache, use ``--llm-provider stub-uniform``.
+
+Forcing fully-fresh elicitation (no cache reuse)
+------------------------------------------------
+Live runs read the bundled cache at ``data/berlin/llm_cache_v4/`` first
+and only call the LLM on cache miss. To force a clean live elicitation
+with no cache reuse, point ``--preference-cache-dir`` at an empty
+directory:
+
+    python examples/02_berlin_replication/run_v4_hybrid.py \\
+        --llm-provider codex-cli \\
+        --preference-cache-dir /tmp/v4_fresh_cache
+
+This makes every prompt a cache miss → every prompt is dispatched to
+the LLM → all 504 elicitation calls hit the provider, billing the
+subscription / credits accordingly. Useful for verifying the LLM's
+behaviour or comparing two providers on the same demographic prompts.
 """
 from __future__ import annotations
 

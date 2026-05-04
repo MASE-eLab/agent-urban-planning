@@ -101,7 +101,7 @@ def _run_baseline(
     engine = _call_engine_factory(engine_factory, sc, seed, iters, phase="baseline")
     eng = SimulationEngine(
         scenario=sc, agent_config=ag, engine=engine,
-        seed=seed, verbose=False,
+        seed=seed, verbose=True,
     )
     scale_agent_mass(eng.population, PACK_WORKER_MASS)
     print(f"[{variant_name}] zones={len(eng.base_env.zone_names)}, "
