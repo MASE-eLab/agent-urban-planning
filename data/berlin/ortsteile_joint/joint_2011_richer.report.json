@@ -1,6 +1,6 @@
 {
   "mode": "richer",
-  "out_npz": "/Users/jeff/Desktop/projects/multi_agent_simulator/data/berlin/ortsteile_joint/joint_2011_richer.npz",
+  "out_npz": "data/berlin/ortsteile_joint/joint_2011_richer.npz",
   "n_ortsteile": 96,
   "total_cells": 34560,
   "max_marginal_err_absolute": 5.486548654920487e-05,
